@@ -1,222 +1,139 @@
-import os
 import logging
-from core.openai_management import execute_agents_in_parallel, security_check_user_message, choose_model_for_context
-from core.agents import TopicAgent, HistoryAgent, FinishAgent, CombinedProbingAgent
-from core.database import InterviewData
-from core.parameters import MODEL_NAME_SECURITY, PROMPT_CLEANING, END_OF_INTERVIEW_SEQUENCE
+from core.agent import Agent
+from core.database import InterviewManager
+from core.auxiliary import might_be_code
 
-APP_ENV = os.getenv("APP_ENV", "DEV")
-
-def _next_action(interview:dict)->str:
-	"""
-	Determine what to do next in the interview.
-
-	Args
-		interview: dict object containing interview context
-	Returns
-		action (str): one of ("transition", "proceed", "finish")
-	"""
-	# Get the last topic id and the current topic id
-	last_topic_id = max([int(k) for k in interview.get("topics").keys()])
-	current_topic_id = int(interview.get("topic_history")[-1])
-
-	# Get the current topic counter and the length of the current topic 
-	topic_counter = int(interview.get("counter_topic"))
-	topics_length = [int(k) for k in interview.get("topics_length")] + [10]  # for the "finish" topic, add 10.
-
-	# This assumes that the "end of interview" topic is NOT among the listed topics,
-	# such that "is_last_topic == True" means we are in the last non-finish block.
-	is_last_question_in_topic = (topic_counter >= topics_length[current_topic_id - 1])
-
-	if (current_topic_id == last_topic_id) and is_last_question_in_topic:
-		return "finish"
-	elif (current_topic_id < last_topic_id) and is_last_question_in_topic:
-		return "transition"
-	elif current_topic_id > last_topic_id:
-		return "finish"
-	return "proceed"
-
-def next_question(body:dict)->str:
-	"""
-	Process user reply and generate the response by the AI interviewer.
-
-	Args
-		body (dict) containing request
-		sandbox (bool): whether to integrate with DB
-	Returns
-		(str) response
-	"""
-	# Get conversation data
-	interview = InterviewData(body)
-	if APP_ENV != "DEV":
-		# In DEV mode, just load empty dictionary
-		interview.load_remote_session_data()
-
-	# Exit condition: send response to the client that the interview is over
-	if interview.get("terminated", raiseKeyError=False):
-		logging.info("Interview terminated...")
-		return "The interview is over. Please proceed to the next page."
-
-	# Exit condition: client request for summary of interview 
-	if body.get("get_summary"):
-		logging.info("Returning interview transcripts summary...")
-		return interview.get("summary_cleaned") or interview.get("summary")
-
-	# Initialize interview history 
-	if not interview.data:
-		interview.initialize_conversation(body)
-		interview.add_message(body['firstQuestion'], "assistant")
-	
-	if APP_ENV == "DEV":
-		logging.info(f"Have initial interview history of {interview.data}...")
-
-	################# PROCESS USER REPLY ####################
-
-	user_reply = body['message']
+agent = Agent()
+logging.info("OpenAI client instantiated -- should happen only once!")
 
 
-	################## SECURITY CHECK ########################
+OFF_TOPIC_MESSAGE = """
+I might have misunderstood your response, 
+but it seems you might be trying to steer the interview off topic 
+or that you have provided me with too little context. 
+Can you please try to answer the question again in a different way, 
+preferably with more detail, 
+or say so directly if you prefer not to answer the question?
+"""
 
-	# Terminate if the conversation has been flagged too often
-	exceeded, termination_message = interview.check_security_counter()
-	if exceeded:
-		logging.error("Security error: counter exceeded, terminating...")
-		return termination_message
+END_OF_INTERVIEW_MESSAGE = """
+Thank you for sharing your insights and experiences today. 
+Your input is invaluable to our research. 
+Please proceed to the next page.
+---END---
+"""
 
-	# Sending code or repeating messages?
-	if interview.user_repeated_previous_message(user_reply) or interview.is_code(user_reply):
-		interview.flag(user_reply)
+TERMINATION_MESSAGE = """
+The interview is over. 
+Please proceed to the next page.
+---END---
+"""
 
-	# Response fits the interview context?
-	secure = security_check_user_message(
-		last_question=interview.data["chat"][-1]["content"],
-		user_answer=user_reply, 
-		model=MODEL_NAME_SECURITY
-	)
-	if not secure:
-		interview.flag(user_reply)
-		if APP_ENV != "DEV":
-			interview.update_remote_session_data()
-		# Send a response to the client that the user message is not secure
-		logging.error("Security error: reseting interview....")
-		return "I might have misunderstood your response, but it seems " \
-			"you might be trying to steer the interview off topic or that " \
-			"you have provided me with too little context. Can you please " \
-			"try to answer the question again in a different way, preferably " \
-			"with more detail, or say so directly if you prefer not to answer the question?"
+MAX_FLAGGED_MESSAGE = """
+Please note, too many of your messages have been identified 
+as unusual input. Please proceed to the next page.
+---END---
+"""
 
+def load_interview(request:dict) -> dict:
+    """ Return (summary of) interview history to user. """
+    session_id = request['session_id']
+    if request.get('get_summary'):
+        return {'summary': InterviewManager(session_id).get_summary()}  
+    return InterviewManager(session_id).data
 
-	# Add new message to interview transcript
-	# After security checks to ensure message is not added if it is flagged
-	interview.add_message(user_reply, role="user")
+def delete_interview(request:dict) -> dict:
+    """ Delete existing interview saved to database. """
+    session_id = request['session_id']
+    return InterviewManager(session_id).delete()
 
+def next_question(request:dict) -> dict:
+    """
+    Process user message and generate response by the AI-interviewer.
 
-	#################### API CALLS ##########################
+    Args:
+        request: (dict) containing user input and interview structure
+    Returns:
+        response: (dict) containing `message` from interviewer
+    """
 
-	# Determine the next action in the interview workflow. Do routing based on this below.
-	action = _next_action(interview)
-
-	# Determine the model based on the expected context length (4k or 16k).
-	default_model = choose_model_for_context(interview, user_reply)
-
-	# TOPIC TRANSITION
-	if action == "transition":
-		suggestions = execute_agents_in_parallel([
-			HistoryAgent(
-				interview.data, 
-				interview.get("prompt_history"), 
-				interview.get("temperature_history"),
-				interview.get("model_name_long")
-			),
-			TopicAgent(
-				interview.data, 
-				interview.get("prompt_topic"), 
-				interview.get("temperature_topic"),
-				default_model 
-			)
-		])
-		next_agent = "topic_agent"
-		interview.update_summary(suggestions["history_agent"]["response"]["summary"])		
-
-	# WITHIN TOPIC
-	if action == "proceed":
-		probing_agent = CombinedProbingAgent(
-			interview.data, 
-			interview.get("prompt_probing"), 
-			interview.get("temperature_probing"),
-			default_model
-		)
-		suggestions = {"probing_agent": probing_agent.generate_output()}
-		next_agent = "probing_agent"
-	
-	# FINISH INTERVIEW
-	if action == "finish":
-		finish_agent = FinishAgent(
-			interview.data, 
-			interview.get("prompt_finish"), 
-			interview.get("temperature_finish"),
-			default_model
-		)
-		counter_finish = int(interview.get("counter_finish"))
-		next_agent = "finish_agent"
-
-		if counter_finish <= 1:
-			# First finish question: Update summary once.
-			suggestions = execute_agents_in_parallel([
-				finish_agent, 
-				HistoryAgent(
-					interview.data, 
-					interview.get("prompt_history"),
-					interview.get("temperature_history"),
-					interview.get("model_name_long")
-				)
-			])
-			interview.update_summary(suggestions["history_agent"]["response"]["summary"])
-
-		elif counter_finish == 2:
-			# 2nd finish question: Clean the summary from meta comments before we share it with users
-			suggestions = execute_agents_in_parallel([
-				finish_agent, 
-				HistoryAgent(
-					interview.data, 
-					PROMPT_CLEANING, 
-					0.0, 
-					interview.get("model_name_long")
-				)
-			])
-			# Add cleaned summary
-			interview.set("summary_cleaned", suggestions["history_agent"]["response"]["summary"])
-
-		else:
-			# From 3rd question: Only return the pre-determined questions and check whether the interview should be terminated.
-			suggestions = {"finish_agent": finish_agent.generate_output()}
-
-			# Handle end of interview. Force end of interview if necessary.
-			if END_OF_INTERVIEW_SEQUENCE in suggestions[next_agent]["response"]["question"]:
-				interview.set("terminated", True)
-				interview.set("terminated_reason", "end_of_interview_reached")
+    user_input = request['user_message']
 
 
-	############## BOOK KEEPING #############
-	# New question from the AI
-	new_question = suggestions[next_agent]["response"]["question"]
+    ##### LOAD INTERVIEW HISTORY OR INITIALIZE #####
 
-	# Add output from agents to interview
-	interview.set("agent_output", interview.get("agent_output") + [suggestions])
+    interview = InterviewManager(request['session_id'], request)
 
-	# Update the interview state variables
-	interview.update_state_variables(next_agent)
+    # Exit condition: this interview has been previously ended
+    if interview.is_terminated():
+        return {'message': TERMINATION_MESSAGE}
 
-	# Prepare tokens counts update (approximate)
-	new_question_tokens = int((len(new_question) * 0.3))
-	max_token_use = max([x["tokens_response"] for x in suggestions.values()])
+    # Flag if user sending code or repeating messages
+    if interview.has_repeated_message(user_input) or might_be_code(user_input):
+        interview.flag_risk(user_input)
 
-	interview.add_message(new_question, "assistant", max_token_use, new_question_tokens)
-	if APP_ENV != "DEV":
-		interview.update_remote_session_data()
+    # Terminate if the conversation has been flagged too often
+    if interview.flagged_too_often():
+        return {'message': MAX_FLAGGED_MESSAGE}
 
-	logging.info("Successfully determined next question.")
-	return new_question
+    # Terminate if user message does not fit the interview context
+    if interview.is_off_topic(agent, user_input):
+        return {'message': OFF_TOPIC_MESSAGE}
+
+    # Update *after* security checks so flagged messages not added
+    """ QUESTION: WHY NOT ADD TO HISTORY ANYWAY? """
+    interview.add_message(user_input, role="user")
+
+
+    ##### CONTINUE INTERVIEW BASED ON WORKFLOW #####
+
+    # Topics to cover in interview
+    topics_to_cover = interview.get_topic_guide()
+    num_topics = len(topics_to_cover) 
+
+    # Current topic guide
+    current_topic_idx = interview.get_current_topic()
+    on_last_topic = current_topic_idx == num_topics - 1
+    logging.info(f"On topic {current_topic_idx+1}/{num_topics}...")
+
+    # Current question within topic guide
+    current_question_idx = interview.get_current_topic_question()
+    num_questions = topics_to_cover[current_topic_idx]["length"]
+    on_last_question = current_question_idx == num_questions - 1
+    logging.info(f"On question {current_question_idx+1}/{num_questions}...")
+
+    # Continue in workflow
+    final_summary = False
+    if on_last_topic and on_last_question:
+        # Close interview with pre-determined closing questions
+        last_questions_idx = interview["current_finish_idx"]
+        last_questions = interview["closing_questions"]
+        final_summary = last_questions_idx == len(last_questions) - 1
+        
+        # Exit condition: have already produced last "final" question
+        if last_questions_idx == len(last_questions):
+            interview.terminate()
+            return {"message": END_OF_INTERVIEW_MESSAGE}
+
+        # Otherwise, get next "final" interviewer question
+        next_question = last_questions[last_questions_idx]
+        output = {"FINISH": {"Question": next_question}}
+
+    elif on_last_question:
+        # Transition to *next* topic...
+        next_question, output = agent.transition_topic(interview.data)
+
+    else:
+        # Proceed *within* topic...
+        next_question, output = agent.probe_within_topic(interview.data)
+
+    # Update interview with new output
+    logging.info(f"Interviewer produced output:\n{output}")
+    interview.update_summary(agent, clean=final_summary)
+    interview.update_new_output(next_question, output)
+    interview.update_remote_session_data()
+    
+    return {'message': next_question}
 
 
 

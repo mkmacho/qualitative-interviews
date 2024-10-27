@@ -3,6 +3,7 @@ import json
 
 
 class Logger(object):
+	""" Logging wrapper for logging complex objects like request/response. """
 	def __init__(self, level=logging.INFO):
 		handlers = [logging.StreamHandler()]
 		logging.basicConfig(

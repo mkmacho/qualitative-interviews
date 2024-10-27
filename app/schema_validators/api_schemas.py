@@ -1,34 +1,53 @@
-INTERVIEW = {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "title": "User message object",
-    "description": "User's interview response/request",
+NEXT = {
+    "description": "Next endpoint request schema",
     "properties": {
-        "message": {"type": "string"},
-        "topics": {"type":"object"},            # or string?
-        "topicsLength": {"type": "array"},      # or string?
-        "firstQuestion": {"type": "string"},
-        "promptTopic": {"type":"string"},       # set default in code?
-        "promptHistory": {"type":"string"},
-        "promptFinish": {"type":"object"},      # why different?
-        "promptProbing": {"type":"string"},
-        "modelNameShort": {"type":"string"},    
-        "modelNameLong": {"type":"string"},     
-        "temperatureTopic": {"type":"number", "minimum":0.0, "maximum":1.0},
-        "temperatureHistory": {"type":"number", "minimum":0.0, "maximum":1.0},
-        "temperatureFinish": {"type":"number", "minimum":0.0, "maximum":1.0},
-        "temperatureProbing": {"type":"number", "minimum":0.0, "maximum":1.0},
-        "userID": {"type":"number"},
-        "surveyID": {"type":"number"},
-        "questionID": {"type":"number"},
-        "versionID": {"type":"number"},
+        "session_id": {
+            "type": ["number", "string"],
+            "description": "Unique interview ID"
+        },
+        "user_message": {
+            "type": "string",
+            "description": "Interviewee response"
+        },
+        "first_question": {
+            "type": "string",
+            "description": "Question that began interview"
+        },
+        "open_topics": {
+            "type":"array",
+            "description": "List of topics to cover in interview",
+            "items": { "type": "object" }
+        },           
+        "closing_questions": {
+            "type": "array",
+            "description": "Final questions to close interview",
+            "items": { "type": "string" }
+        }
     },
     "required": [
-        "message","firstQuestion",
-        "topics","topicsLength",
-        "promptTopic","promptHistory","promptFinish","promptProbing",
-        "userID","surveyID","questionID","versionID"
+        "session_id",
+        "user_message"
     ],
     "type": "object"
 }
 
-    
+LOAD = {
+    "description": "Load endpoint request schema",
+    "properties": {
+        "session_id": {
+            "type": ["number", "string"],
+            "description": "Unique interview ID"
+        },
+        "get_summary": {
+            "type": ["boolean"],
+            "description": "Directive to summarize interview"
+        }
+    },
+    "required": ["session_id"],
+    "type": "object"
+}   
+
+API_SCHEMAS = {
+    "NEXT_POST": NEXT,
+    "LOAD_POST": LOAD
+}

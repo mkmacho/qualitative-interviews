@@ -3,9 +3,10 @@ from functools import wraps
 from flask import make_response, jsonify, request
 import time
 import traceback as tb
-import schema_validators
 from log import Logger
 from core.parameters import WHITELISTED_DOMAINS
+from jsonschema import validate 
+from schema_validators.api_schemas import API_SCHEMAS
 
 logger = Logger()
 
@@ -14,7 +15,6 @@ def wrap_flask_errors():
 	return {
 		error_code: {
 			error: lambda ex: make_response(jsonify({
-				"error_code": getattr(ex, "error_code", error_code),
 				"http_code": getattr(ex, "http_code", 405 if "Method" in str(ex) else 400),
 				"meta": {
 					"type": type(ex).__name__,
@@ -28,6 +28,7 @@ def wrap_flask_errors():
 	}
 
 def allowed_domains():
+	""" Only allow pre-defined domains to access. """
 	def decorator(f):
 		@wraps(f)
 		def decorated(*args, **kwargs):
@@ -50,29 +51,30 @@ def validate_json(endpoint):
 		@wraps(f)
 		def decorated(*args, **kwargs):
 			try:
-				data = request.get_json(force=True, silent=True) or {}
-				schema = '{0}_{1}'.format(endpoint, request.method)
-				schema_validators.validate(data, schema)
+				payload = request.get_json(force=True, silent=True) or {}
+				endpoint_schema = '{0}_{1}'.format(endpoint, request.method)
+				validate(payload, API_SCHEMAS[endpoint_schema])
 			except Exception as e:
 				return make_response(
 					jsonify({
 						"message":str(e).split("\n")[0],
-						"http_code":400,
-						"meta":{'str':str(e),'type':type(e).__name__,'tb':tb.format_exc()}
-					}),400
+						'type':type(e).__name__,
+						'tb':tb.format_exc()
+					}), 400
 				)
 			return f(*args, **kwargs)
 		return decorated
 	return decorator
 
-def response_log(resp, status, start, key="info", resp_type="RequestSuccessful"):
-	logger.log(key="critical", message={
+def response_log(response, status, start_time, key="info"):
+	""" Log outgoing response. Useful for debugging/monitoring. """
+	logger.log(key=key, message={
 		"payload":request.get_json(force=True, silent=True) or {},
 		"url":request.url,
-		"duration":time.time() - start,
-		"response":resp,
+		"duration":time.time() - start_time,
+		"response":response,
 		"http_code":status,
-		"type":resp_type
+		"type":response["type"] if response.get("tb") else "RequestSuccessful"
 	})
 
 def handle_500(f):
@@ -86,13 +88,7 @@ def handle_500(f):
 			http_code = getattr(e, "http_code", None) or getattr(e, "code", 500)
 			message = str(e) or getattr(e, "message", "Service failed")
 			meta = {"type":type(e).__name__,"tb":tb.format_exc(),"str":message}
-			response_log(meta, http_code, start_time, key="error", resp_type=meta["type"])
-			response = make_response(
-				jsonify({
-					"message":message, 
-					"http_code":http_code, 
-					"meta":meta
-				}), http_code
-			)
+			response_log(meta, http_code, start_time, key="error")
+			response = make_response(jsonify(meta), http_code)
 		return response
 	return decorated

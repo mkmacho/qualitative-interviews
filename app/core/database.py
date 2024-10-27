@@ -1,231 +1,169 @@
-import boto3
+import os
+import redis
 import json
 import time
 import logging
-from core.parameters import MAX_SECURITY_FLAG_COUNTER, END_OF_INTERVIEW_SEQUENCE
+from core.parameters import MAX_FLAGS_COUNTER
 
-DB = boto3.resource('dynamodb').Table("UserChats")
-logging.critical("DynamoDB connection established -- should happen only once!")
+sessions = redis.Redis(
+    host=os.environ["REDIS_HOST"], 
+    port=os.environ["REDIS_PORT"],
+    password=os.environ["REDIS_PASSWORD"]
+)
+logging.info("Redis connection established -- should happen only once!")
 
-def to_camelCase(s:str):
-    """Converts string from snake_case to camelCase."""
-    parts = s.split('_')
-    return parts[0] + ''.join(p.capitalize() for p in parts[1:])
-
-class InterviewData(object):
+class InterviewManager(object):
     """
-    Class to manage the conversation history for a single interview 
-    between the user and the AI interviewer.
-
-    The (unique) ID of each session will be
-    a concatenation of request data keys separated with a hash.
+    Class to manage the conversation history for an interview 
+    between the user and the AI-interviewer, 
     """
-    def __init__(self, body:dict):
-        session_id = []
-        for key in ["userID", "surveyID", "questionID", "versionID"]:
-            session_id.append(str(body[key]))
-        self.session_id = "#".join(session_id)
-        self.data = {}
-        logging.info(f"Loaded specific interview: {self.session_id}.")
-    
-    def get(self, key, raiseKeyError=True):
-        """ Get a value from the local interview data (chat history). """
-        return self.data.get(key) if not raiseKeyError else self.data[key]
+    def __init__(self, session_id:str, body:dict={}):
+        self.session_id = session_id
+        if sessions.get(session_id):
+            logging.info(f"Resuming interview session '{session_id}'...")
+            self.data = json.loads(sessions.get(session_id))
+            logging.info(f"Loaded:\n{self.data}")
+        elif body.get('open_topics'):
+            assert body.get('first_question')
+            logging.info(f"Starting interview session '{session_id}'...")
+            self.data = {
+                'session_id': session_id,
+                'open_topics': body['open_topics'],
+                'closing_questions': body.get('closing_questions', []),
+                'current_topic_idx': 0,
+                'current_question_idx': 0,
+                'current_finish_idx': 0,
+                'chat': [],
+                'security': {
+                    'flag_counter': 0, 
+                    'flagged_messages': []
+                },
+                'terminated': False,  
+                'summary': '',
+                'summary_cleaned': '',
+                'outputs': []
+            }
+            self.add_message(body['first_question'], role='assistant')
+        else:
+            logging.info(f"Interview session '{session_id}' not loaded!")
+            self.data = {}
 
-    def set(self, key, value):
-        """ Set a value in the local interview data (chat history). """
-        self.data[key] = value
+    def delete(self):
+        """ Delete Redis interview key """
+        sessions.delete(self.session_id)
+        logging.info(f"Interview '{self.session_id}' successfully deleted!")
 
-    def load_remote_session_data(self):
-        """ Load data for this participants x survey # question combination. """
-        response = DB.get_item(Key={'session_id':self.session_id})
-        if not 'Item' in response: return
-        
-        # Format session data
-        self.data = response['Item']
-        for key in ['counter_topic', 'tokens_last_prompt', 'tokens_last_reply', "summary_end"]:
-            self.data[key] = int(self.data[key]) 
+    def is_terminated(self) -> bool:
+        """ If interview has been terminated. """
+        return self.data['terminated']
 
-        # Second level attributes
-        for key in ["flag_counter", "speed_counter"]:
-            self.data["security"][key] = int(self.data["security"][key])
+    def get_summary(self) -> str:
+        """ Return summary of interview. """
+        summary = self.data.get("summary_cleaned") or self.data.get("summary")
+        if not summary:
+            logging.error("No summary to return.")
+        return summary
 
-        # List attributes
-        self.data["topic_history"] = [int(x) for x in self.data["topic_history"]]
+    def get_topic_guide(self) -> dict:
+        """ Return list of topics to cover in interview. """
+        return self.data['open_topics']
 
-        logging.info("Successfully loaded interview history from DB.")
-
-    def flag(self, user_reply:str):
+    def flag_risk(self, user_reply:str):
         """ Flag possible security risk. """
         self.data["security"]["flag_counter"] += 1
-        self.data["security"]["flagged_messages"].append((user_reply, int(time.time())))
+        self.data["security"]["flagged_messages"].append((
+            user_reply, 
+            int(time.time())
+        ))
+        logging.warning("Flagging possible risk...")
 
-    def update_summary(self, new_summary:str):
-        """ Update summary information 
-        (we summarized everything, so override the previous summary)
-        """
-        self.set("summary", new_summary)
-        self.set("summary_end", len(self.get("chat")))
-
-    def initialize_conversation(self, body:dict):
-        """
-        Create first db entry for the participant x survey x question x version combination.
-
-        Arg
-            body (dict): the HTML request data from the event object.
-        Returns:
-            new_entry (dict): the new entry to be added to the DynamoDB table.
-        """
-        assert not self.data
-        self.data = {
-            'session_id': self.session_id,
-            'userID': str(body['userID']),
-            'surveyID': str(body['surveyID']),
-            'questionID': str(body['questionID']),
-            'versionID': str(body['versionID']),
-            'temperature_history': float(body.get('temperature_history', 0.0)),
-            'temperature_finish': float(body.get('temperature_finish', 0.7)),
-            'temperature_topic': float(body.get('temperature_topic', 0.7)),
-            'temperature_probing': float(body.get("temperature_probing", 0.7)),
-            'tokens_last_prompt': 0,
-            'tokens_last_reply': 0,
-            'counter_topic': 1,
-            'counter_finish': 1,
-            'topics': body['topics'], # json.loads(body['topics']) if isinstance(body['topics'], str)
-            "topics_length": body["topicsLength"],
-            'topic_history': [1],
-            'question_type': ['topic_agent'],
-            'agent_output': [{
-                'topic_agent': {
-                    'response': {
-                        'new_topic_id': 1, 
-                        'question': str(body['firstQuestion'])
-                    }
-                }
-            }],
-            'model_name_short': body.get('model_name_short', 'gpt-4o'),
-            'model_name_long': body.get('model_name_long', 'gpt-4o'),
-            # Could default these here from parameters
-            'prompt_topic': body['promptTopic'],
-            'prompt_history': body['promptHistory'],
-            'prompt_finish': body['promptFinish'],
-            'prompt_probing': body['promptProbing'],
-            #'prompt_combined': '',
-            'chat': [],
-            'chat_timestamps': [],
-            'security': {
-                'flag_counter': 0,
-                'flagged_messages': [],
-                'speed_counter': 0,
-                'speed_flagged_messages': []
-            },
-            'terminated': False,  # True if the interview was terminated
-            'terminated_reason': '', # Reason for termination
-            'summary': '',
-            'summary_cleaned': '',
-            'summary_end': 0  # index of the last message that was included in the summary
-        }
-
-    def update_remote_session_data(self):
-        """ Update db entry with local conversation data. """
-        DB.put_item(Item=self.data)
-
-    def add_message(self, message:str, role:str, tokens_last_prompt:int=0, tokens_last_reply:int=0):
-        """
-        Add message to the raw chat history.
-        
-        Args
-            message (str): the message to be added.
-            role (str): the role of the message, either "user" or "assistant" or "system"
-        """
-        self.data['chat'].append({'role': role, 'content': message})
-        self.data['chat_timestamps'].append(int(time.time()))
-
-        # update token count
-        if (tokens_last_prompt > 0) & (tokens_last_reply > 0):
-            self.data['tokens_last_prompt'] = tokens_last_prompt
-            self.data['tokens_last_reply'] = tokens_last_reply
-        
-    def update_state_variables(self, agent_name:str):
-        """ Update the counters and other state variables in interview object. """
-        # Update topic history (assuming the "finish" topic is NOT among the listed topics)
-        topic_history = self.get("topic_history")
-        current_topic_id = int(topic_history[-1])
-        last_topic_id = max([int(k) for k in self.get("topics").keys()])
-
-        if agent_name == "topic_agent":
-            self.set("topic_history", topic_history + [current_topic_id + 1])
-        elif agent_name == "finish_agent":
-            self.set("topic_history", topic_history + [last_topic_id + 1])
-        else:
-            self.set("topic_history", topic_history + [current_topic_id])
-
-        # Update question type (e.g. which agent is asking the question)
-        self.set("question_type", self.get("question_type") + [agent_name])
-
-        # Update counters
-        if agent_name == "topic_agent":
-            self.set("counter_topic", 1)
-
-        elif agent_name == "probing_agent":
-            self.set("counter_topic", self.get("counter_topic") + 1)
-
-        elif agent_name == "finish_agent":
-            if current_topic_id == last_topic_id:
-                # Handle the case where we just transitioned to the "finish" topic
-                self.set("counter_topic", 1)
-                self.set("counter_finish", self.get("counter_finish") + 1)
-            else:
-                # In all other cases, increment the topic counter
-                self.set("counter_topic", self.get("counter_topic") + 1)
-                self.set("counter_finish", self.get("counter_finish") + 1)
-        else:
-            raise ValueError(f"Unknown choice: {agent_name}")
-
-    def check_security_counter(self):
-        """ 
-        Check if the conversation has been flagged too often. 
-        If so, terminate the conversation, update, and return termination message.
-
-        Returns
-            exceeded (bool): whether security counter has been exceeded
-        """
-        if self.data["security"]["flag_counter"] >= MAX_SECURITY_FLAG_COUNTER:
-            # Update termination status, if necessary
-            if not self.data["terminated"]:
-                self.set("terminated", True)
-                self.set("terminated_reason", "security_flag_counter_exceeded")
-                self.update_remote_database()
-
-            # Termination message to the client
-            termination_message = f"Please note, many of your messages have " \
-                "been identified as unusual input. " \
-                "Please proceed to the next page.\n {END_OF_INTERVIEW_SEQUENCE}"
-            return (True, termination_message)
-        
-        return (False, None)
-
-    def user_repeated_previous_message(self, user_message:str, min_chat_length:int=5):
-        """ Check if the user has repeated the same message multiple times. """
-        # Don't do this if the chat is not long enough
-        if len(self.data["chat"]) < min_chat_length:
-            return False
-
-        # Check if the last two messages of the user are the same
-        if user_message == self.data["chat"][-2]["content"]:
+    def is_off_topic(self, agent:object, user_reply:str) -> bool:
+        assert self.data["chat"][-1]["role"] == "assistant"
+        prior_question = self.data["chat"][-1]["content"]
+        if not agent.check_relevance(prior_question, user_reply):
+            interview.flag_risk(user_reply)
+            interview.update_remote_session_data()
+            logging.error("User response not on topic, quitting.")
             return True
-
-        # Check if the user just repeated the last message of the AI
-        if user_message == self.data["chat"][-1]["content"]:
-            return True
-
         return False
 
-    def is_code(self, user_message:str, threshold:int=5):
-        """ Check if the message contains code. 
-        Return True if it does, False otherwise.
+    def flagged_too_often(self) -> bool:
+        """ Check if the conversation has been flagged too often. """
+        if self.data["security"]["flag_counter"] >= MAX_FLAGS_COUNTER:
+            self.terminate("security_flag_counter_exceeded")
+            self.update_remote_session_data()
+            logging.error("Flagged too often, quitting.")
+            return True        
+        return False
+
+    def update_remote_session_data(self):
+        """ Update remote database interview object. """
+        sessions.set(self.session_id, json.dumps(self.data))
+        assert sessions.get(self.session_id)
+        logging.info(f"Updated interview session '{self.session_id}'...")
+
+    def add_message(self, message:str, role:str):
+        """ Add to chat history. """
+        assert role in ["user", "assistant", "system"]
+        self.data['chat'].append({
+            'role':role, 
+            'content':message,
+            'time':int(time.time())
+        })
+
+    def has_repeated_message(self, message:str, min_length:int=5) -> bool:
+        """ Check if user has repeated the same message multiple times. """
+        # Ignore if the chat is not long enough
+        if len(self.data["chat"]) < min_length:
+            return False
+
+        # Check if the last/penultimate message of the user are the same
+        return message in (chat['content'] for chat in self.data["chat"][-2:])
+
+    def terminate(self, reason:str="end_of_interview_reached"):
+        """ Record termination of interview. """
+        self.data["terminated"] = True
+        self.data["terminated_reason"] = reason
+
+    def update_summary(self, agent:object, clean:bool=False):
+        """ Update summary information. """
+        summary = agent.summarize(self.data, clean=clean)['SUMMARY']['Summary']
+        self.data["summary_cleaned" if clean else "summary"] = summary
+        logging.info("Successfully added summary to history.")
+
+    def get_current_topic(self) -> int:
+        """ Return topic index. """
+        return self.data["current_topic_idx"]
+
+    def get_current_topic_question(self) -> int:
+        """ Return question index within topic. """
+        return self.data["current_question_idx"]
+
+    def _update_counters(self, output:dict):
+        """ Update the topic and question counters in interview 
+            history based on action we just took. 
         """
-        symbols = ["{", "}", "(", ")", "[", "]", ";", ":", "=", "<", ">", "+", "-", "*", "&", "|", "!", "^", "~", "@"]
-        count = sum(user_message.count(symbol) for symbol in symbols)
-        return count > (threshold * (1 + len(user_message) / 100.0))
-  
+        if output.get("TRANSITION"):
+            # Having just transitioned topic...
+            self.data["current_question_idx"] = 1   # reset question counter
+            self.data["current_topic_idx"] += 1     # increment topic counter
+        elif output.get("PROBE"):
+            # Having just probed within topic... 
+            self.data["current_question_idx"] += 1  # only increment question
+        else:
+            assert output.get("FINISH")
+            self.data["current_finish_idx"] += 1    # increment final questions
+
+    def update_new_output(self, next_question:str, output:dict):
+        """ Update all interview variables before closing application. """
+        output.update({
+            "topic_idx": self.data['current_topic_idx'],
+            "question_idx": self.data['current_question_idx']
+        })
+        self.data["outputs"] += [output]
+        self.add_message(next_question, "assistant")
+        self._update_counters(output)
+
+
+
+   
