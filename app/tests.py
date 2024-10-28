@@ -31,7 +31,7 @@ SAMPLE_FIRST_PAYLOAD = {
 		"As we conclude our discussion, are there any perspectives or information you feel we haven't addressed that you'd like to share?",
 		"Reflecting on our conversation, what would you identify as the main reason you're not participating in the stock market?"
 	],
-	"session_id":101
+	"session_id":"TEST_SESSION_ID"
 }
 
 class APITestCase(unittest.TestCase):

@@ -2,55 +2,70 @@
 
 ## Companion codebase for "Conducting Qualitative Interviews with AI"
 
-This is a Python web application built with Flask and uWSGI. 
-TODO: Write description of project.
+This is a Python web application built with Flask and uWSGI. Using customizable prompts to [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs), the "AI-interviewer" will guide an interview along topics laid out in the request. Specifically, it will probe the respondent to learn more about their views on each topic laid out in the request, for up to a certain number of questions. 
 
 
 ## Installation
 
-To run locally, we advise you create a virtual environment so as to install necessary packages in a clean environment, guaranteed of no clashing dependencies.
+To run locally, first clone the repository
 
 ```bash
- python3 -m venv interviews
-source ./inteviews/bin/activate
+git clone https://github.com/mkmacho/qualitative-interviews.git
+cd qualitative-interviews
 ```
 
-Install packages with `pip`
-
-```bash
-cd interviews
-pip install -r requirements.txt
-```
-
-Customize `parameters` to meet your personal requirements.
+Next, customize the LLM prompts in `parameters` to meet your personal requirements or use the defaults.
 
 
 ## To Run ##
 
-TODO: explain Docker process.
+### Docker ###
 
+The simplest way to then run the application is via [Docker](https://www.docker.com/products/docker-desktop/). You can easily build a Docker image containing only the necessary packages in a contained environment -- from whatever operating system -- and run a container as follows:
+
+```bash
+docker build -t interviews .
+docker run -d \
+    -p "<YOUR_FORWARDING_PORT>:80" \
+    -e OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>" \
+    -e REDIS_HOST="<YOUR_REDIS_HOST_FOR_DATABASE>" \
+    -e REDIS_PASSWORD="<YOUR_REDIS_PASSWORD>" \
+    -e REDIS_PORT="<YOUR_REDIS_HOST_PORT>" \
+    --name=interviews interviews
 ```
-cd interviews/
-./run.sh
+
+Now, you can make requests to your local "http://0.0.0.0:<YOUR_FORWARDING_PORT>/".
+
+
+### Manually ### 
+
+Otherwise, you can set it up by hand. First install the necessary packages with `pip`
+
+```bash
+pip install -r requirements.txt
 ```
+
+TODO: Figure out manual supervisor set-up.
+
 
 ## API ##
-Currently there is just one API call `/interview`.
+
+The main API is to retrieve the next action in the interview process. Specifically, the AI-interviewer will supply the next question to the interviewee. This is done through a request to the `/next` endpoint.
 
 
-###### interview ######
+###### /next ######
 
 Given a user response (`message`) to a `first_question` and the structure of the interview, we make a request to the application to return the subsequent step (i.e. new question or follow-up) in the interview process.
 
 The API can be called e.g. via [Postman](https://www.postman.com/) as follows:
 
-`POST http://0.0.0.0:8000/interview` (using Docker, run `docker ps` to get the port forwarding)
+`POST http://0.0.0.0:8000/next` (using Docker, run `docker ps` to get the port forwarding)
 
 or via the command-line as:
 
 ```python
 import requests
-response = requests.post("http://0.0.0.0:8000/interview", headers=headers, json=payload)
+response = requests.post("http://0.0.0.0:8000/next", headers=headers, json=payload)
 ```
 
 though the simplest will be to observe (and run) the tests in `tests.py`.
@@ -129,7 +144,7 @@ Et cetera.
     ├── tests.py
     ├── log.py
     ├── decorators.py
-    ├── schema_validators/
+    ├── schema_validators.py
     ├── core/    
     ├───── logic.py
     ├───── agents.py
@@ -151,7 +166,7 @@ All API tests will be added here.
 
 All API decorators will sit here. 
 
-###### schema_validators/ ######
+###### schema_validators.py ######
 
 Validated incoming JSON schema as per [JSON Schema](http://json-schema.org/documentation.html).
 
@@ -178,15 +193,13 @@ This file contains additional functions useful to the core.
 
 ## TODO ##
 
-- Post vs patch (for continuing interview)
-- Continue cleaning, slimming code
-- Does Redis work well going forward?
-- Replicate conversation from paper
-- Change how parameters saved, used (e.g. YAML?)
+- HTTP Post vs Patch for continuing existing interview
+- Does Redis interview store work well going forward?
+- Change how custom parameters saved? (e.g. YAML?)
 - Investigate I/O with Qualtrics
-    - Should parameters include defaults here or those better set in JS?
+    - **Should parameters include defaults here or those better set in JS?**
 - More generally, how best to deploy?
-    - Hosting on Google (https://realpython.com/python-web-applications/)
+    - Google (https://realpython.com/python-web-applications/)
     - AWS
     - Azure
-- Recall: Need low latency, handle multiple queries sudden influx
+    - *Recall: Need low latency, handle multiple queries sudden influx*

@@ -1,17 +1,15 @@
 FROM python:3.13-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
-
 RUN apt-get update && apt-get install -y \
 	build-essential \
 	apt-utils \
-	# libglib2.0 \	
 	nginx \
 	supervisor && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY config/nginx.conf /etc/nginx/sites-enabled/
-RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf && rm /etc/nginx/sites-enabled/default
+RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf && \
+	rm /etc/nginx/sites-enabled/default
 
 COPY config/app.ini /config/
 COPY /config/supervisor.conf /etc/supervisor/conf.d/

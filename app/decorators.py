@@ -6,7 +6,7 @@ import traceback as tb
 from log import Logger
 from core.parameters import WHITELISTED_DOMAINS
 from jsonschema import validate 
-from schema_validators.api_schemas import API_SCHEMAS
+from schema_validators import API_SCHEMAS
 
 logger = Logger()
 
