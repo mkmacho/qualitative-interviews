@@ -1,51 +1,167 @@
 # qualitative-interviews #
 
-## Companion codebase for "Conducting Qualitative Interviews with AI"
+* Companion codebase for ["Conducting Qualitative Interviews with AI"](https://dx.doi.org/10.2139/ssrn.4583756)
 
-This is a Python web application built with Flask and uWSGI. Using customizable prompts to [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs), the "AI-interviewer" will guide an interview along topics laid out in the request. Specifically, it will probe the respondent to learn more about their views on each topic laid out in the request, for up to a certain number of questions. 
+Set up your own interview structure (by modifying the [`parameters.py`](#parameters.py) file) and leverage [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs) to probe specified topics, smoothly transition to new topics, and gracefully close interviews with respondents. 
 
 
-## Installation
+## Table of Contents
+* [Usage](#usage)
+  * [Docker](#docker)
+  * [Manually](#manually)
+  * [Customization](#customization)
+* [API](#api)
+  * [/next](##/next)
+* [App Structure](#app-structure)
+* [TODO](#todo)
 
-To run locally, first clone the repository
+
+
+## Usage
+
+### Docker ###
+
+The simplest way to then run the application is via [Docker](https://www.docker.com/products/docker-desktop/). You can easily build a Docker image containing only the necessary packages in a contained environment -- from whatever operating system!
+
+To start a `qualitative-interviews` container, first clone the project:
 
 ```bash
 git clone https://github.com/mkmacho/qualitative-interviews.git
 cd qualitative-interviews
 ```
 
-Next, customize the LLM prompts in `parameters` to meet your personal requirements or use the defaults.
-
-
-## To Run ##
-
-### Docker ###
-
-The simplest way to then run the application is via [Docker](https://www.docker.com/products/docker-desktop/). You can easily build a Docker image containing only the necessary packages in a contained environment -- from whatever operating system -- and run a container as follows:
+Then build the image and run a container using the provided Dockerfile and the following code:
 
 ```bash
-docker build -t interviews .
+docker build -t qualitative-interviews .
 docker run -d \
-    -p "<YOUR_FORWARDING_PORT>:80" \
+    -p "8000:80" \
     -e OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>" \
     -e REDIS_HOST="<YOUR_REDIS_HOST_FOR_DATABASE>" \
     -e REDIS_PASSWORD="<YOUR_REDIS_PASSWORD>" \
     -e REDIS_PORT="<YOUR_REDIS_HOST_PORT>" \
-    --name=interviews interviews
+    --name=interviews qualitative-interviews
 ```
 
-Now, you can make requests to your local "http://0.0.0.0:<YOUR_FORWARDING_PORT>/".
+Now, you can make requests to your local *http://0.0.0.0:8000/* (listening on port 8000).
 
 
 ### Manually ### 
 
-Otherwise, you can set it up by hand. First install the necessary packages with `pip`
+Otherwise, you can set it up by hand. We advise you to first create a virtual environment so as to install necessary packages in a clean environment, guaranteed of no clashing dependencies.
 
 ```bash
+ python3 -m venv venv
+ cd venv
+ source ./bin/activate
+```
+
+Then clone the project and install the necessary packages with `pip`:
+
+```bash
+git clone https://github.com/mkmacho/qualitative-interviews.git
+cd qualitative-interviews
+
 pip install -r requirements.txt
 ```
 
-TODO: Figure out manual supervisor set-up.
+Finally, start serving the application by running:
+
+```bash
+python app/app.py
+```
+
+Now, you can make requests to your local *http://0.0.0.0:8000/* (listening on port 8000).
+
+
+### Customization
+
+To customize the structure of the interviews (e.g. the topics covered, the duration, the LLM prompts, etc.) simply add or edit a new `python` dictionary containing relevant information for your project.
+
+Currently, in `parameters.py` you will see one element in `INTERVIEW_PARAMETERS`: *STOCK_MARKET_PARTICIPATION*. This holds the guidelines for interviewing respondents on their lack of participation in the stock market. Specifically, it contains elements:
+
+* *first_question*: the initial prompt that begins the interview
+* *open_topics*: the list of topic dictionaries which include the `topic` as well as the `length`, indicating for how many questions to cover this topic
+* *closing_questions*: the (fixed) list of questions/comments to end the interview with
+* *end_of_interview_message*: the message to display at the end of the interview
+* *termination_message*: the message to display in the event the user responds to an ended interview
+* *flagged_message*: the message to display to adversarial behavior
+* *off_topic_message*: the message to display if the user's response is deemed off-topic
+
+As well as elements defining the LLM-interactions:
+
+* *summary*: if/how you would like the AI-interviewer to summarize the interview thus far
+* *transition*: if/how you would like the LLM to transition topics 
+* *probe*: if/how you would like the AI-interviewer to probe topics
+* *security*: if/how you would like the AI-interviewer to ascertain user message relevance
+
+All of which define a `prompt` for the AI-interviewer, a maximum length (`max_tokens`) for the desired response, a `temperature` for the variability of the response, and a `model` for the LLM to use. Note that the prompt may reference the current state of the interview or the defined interview structure through the use of curly bracket variables (e.g. `{topics}` will be populated by the defined `open_topics`).
+
+A sample of this template for *STOCK_MARKET_PARTICIPATION* interviews is displayed here:
+
+```
+{
+    "first_question": "I am interested in learning more about why you currently do not own any stocks or stock mutual funds. Can you help me understand the main factors or reasons why you are not participating in the stock market?",
+    "open_topics": [
+        {
+            "topic":"Explore the reasons behind the interviewee's choice to avoid the stock market.",
+            "length":6
+        },
+        {
+            "topic":"Delve into the perceived barriers or challenges preventing them from participating in the stock market.",
+            "length":5
+        }
+    ],
+    "closing_questions": [
+        "As we conclude our discussion, are there any perspectives or information you feel we haven't addressed that you'd like to share?"
+    ],
+    "end_of_interview_message": "Thank you for sharing your insights and experiences today. Your input is invaluable to our research. Please proceed to the next page.---END---",
+    "summary": {
+        "prompt": """
+            CONTEXT: You're an AI proficient in summarizing qualitative interviews for academic research. You're overseeing the records of a semi-structured qualitative interview about the interviewee's reasons for not investing in the stock market.
+
+            INPUTS:
+            A. Interview Plan:
+            {topics}
+
+            B. Previous Conversation Summary:
+            {summary}
+
+            C. Current Topic:
+            {current_topic}
+
+            D. Current Conversation:
+            {current_topic_history}
+
+            TASK: Maintain an ongoing conversation summary that highlights key points and recurring themes. The goal is to ensure that future interviewers can continue exploring the reasons for non-participation without having to read the full interview transcripts.
+
+            GUIDELINES:
+            1. Relevance: Prioritize and represent information based on their relevance and significance to understanding the interviewee's reasons for not investing in the stock market.
+            2. Update the summary: Integrate the Current Conversation into the Previous Conversation Summary, ensuring a coherent and updated overview. Avoid adding redundant information.
+            3. Structure: Your summary should follow the interview's chronology, starting with the first topic. Allocate space in the summary based on relevance for the research objective, not just its recency.
+            4. Neutrality: Stay true to the interviewee's responses without adding your own interpretations of inferences.
+            5. Sensitive topics: Document notable emotional responses or discomfort, so subsequent interviewers are aware of sensitive areas.
+            6. Reasons: Keep an up-to-date overview of the interviewee's reasons for non-participation.
+
+            Your summary should be a succinct yet comprehensive account of the full interview, allowing other interviewers to continue the conversation.
+
+            YOUR RESPONSE:
+        """,
+        "max_tokens": 1000,
+        "temperature": 0,
+        "model": "gpt-4o"
+    },
+    "transition": {
+        "prompt": "...",
+    },
+    "probe": {
+        "prompt": "...",
+    },
+    "security": {
+        "prompt": "...",
+    }
+}
+```
 
 
 ## API ##
@@ -53,22 +169,20 @@ TODO: Figure out manual supervisor set-up.
 The main API is to retrieve the next action in the interview process. Specifically, the AI-interviewer will supply the next question to the interviewee. This is done through a request to the `/next` endpoint.
 
 
-###### /next ######
+### /next ###
 
-Given a user response (`message`) to a `first_question` and the structure of the interview, we make a request to the application to return the subsequent step (i.e. new question or follow-up) in the interview process.
+Given a user response (`message`) (to an interview question), the (unique) session ID of the interview (`session_id`), and the interview parameters index key to guide the interview parameters (`parameters_id`), we make a request to the application to return the subsequent step (i.e. new question or follow-up) in the interview process.
 
 The API can be called e.g. via [Postman](https://www.postman.com/) as follows:
 
-`POST http://0.0.0.0:8000/next` (using Docker, run `docker ps` to get the port forwarding)
+`POST http://0.0.0.0:8000/next` 
 
-or via the command-line as:
+or through python as:
 
 ```python
 import requests
 response = requests.post("http://0.0.0.0:8000/next", headers=headers, json=payload)
 ```
-
-though the simplest will be to observe (and run) the tests in `tests.py`.
 
 Example headers:
 ```
@@ -81,30 +195,8 @@ Example starting payload:
 ```
 {
     "user_message": "I can't afford it and the stock market is rigged.",
-    "first_question": "I am interested in learning more about why you currently do not own any stocks or stock mutual funds. Can you help me understand the main factors or reasons why you are not participating in the stock market?",
-    "open_topics": [
-        {
-            "topic": "Explore the reasons behind the interviewee's choice to avoid the stock market.",
-            "length": 6
-        },
-        {
-            "topic":" Delve into the perceived barriers or challenges preventing them from participating in the stock market.",
-            "length": 5
-        },
-        {
-            "topic": "Explore a 'what if' scenario where the interviewee invest in the stock market. What would they do? What would it take to thrive? Probing questions should explore the hypothetical scenario.",
-            "length": 3
-        },
-        {
-            "topic": "Prove for conditions or changes needed for the interviewee to consider investing in the stock market.",
-            "length": 2
-        }
-    ],
-    "closing_questions":[
-        "As we conclude our discussion, are there any perspectives or information you feel we haven't addressed that you'd like to share?",
-        "Reflecting on our conversation, what would you identify as the main reason you're not participating in the stock market?"
-    ],
-    "session_id":101
+    "session_id": "STOCK_MARKET_TEST_SESSION",
+    "parameters_id": "STOCK_MARKET_PARTICIPATION"
 }
 ```
 
@@ -122,21 +214,22 @@ Example follow-up payload:
 ```
 {
     "user_message": "People like me never get ahead, only the super rich and big trading firms win.  I don't want to be swindled.",
-    "session_id":101
+    "session_id": "STOCK_MARKET_TEST_SESSION",
+    "parameters_id": "STOCK_MARKET_PARTICIPATION"
 }
 ```
 
-Example response:
+Example follow-up response:
 ```
 {
     'message': 'What specific events or information have you come across that reinforce your belief that the stock market primarily benefits the wealthy and large trading firms?'}
 }
 ```
 
-Et cetera.
+And et cetera.
 
 
-###### App Structure ######
+## App Structure ##
 
 ```
 └── app/
@@ -145,61 +238,68 @@ Et cetera.
     ├── log.py
     ├── decorators.py
     ├── schema_validators.py
+    ├── parameters.py
     ├── core/    
     ├───── logic.py
-    ├───── agents.py
+    ├───── agent.py
     ├───── database.py
-    ├───── openai_management.py
-    ├───── parameters.py
+    ├───── auxiliary.py
+    ├── client/    
+    ├───── [client-side UI in progress]
 ```
 
 
-###### app.py ######
+### app.py ###
 
 All app API calls will be set up here.
 
-###### tests.py ######
+### tests.py ###
 
 All API tests will be added here.
 
-###### decorators.py ######
+### decorators.py ###
 
 All API decorators will sit here. 
 
-###### schema_validators.py ######
+### schema_validators.py ###
 
 Validated incoming JSON schema as per [JSON Schema](http://json-schema.org/documentation.html).
 
-###### core/logic.py ######
+### parameters.py ###
+
+**Contains the interview-specific parameters. Update or create your own LLM prompts!**
+
+### core/logic.py ###
 
 The main endpoint requests the next interview action from here.
 
-###### core/agent.py ######
+### core/agent.py ###
 
 This file contains the AI-interviewer GPT integration.
 
-###### core/database.py ######
+### core/database.py ###
 
 This file contains the InterviewManager responsible for storing the conversation.
 
-###### core/auxiliary.py ######
+### core/auxiliary.py ###
 
 This file contains additional functions useful to the core.
 
-###### core/parameters.py ######
-
-**FOR NOW** contains the project-specific parameters.
 
 
 ## TODO ##
 
-- HTTP Post vs Patch for continuing existing interview
-- Does Redis interview store work well going forward?
-- Change how custom parameters saved? (e.g. YAML?)
-- Investigate I/O with Qualtrics
-    - **Should parameters include defaults here or those better set in JS?**
-- More generally, how best to deploy?
+- HTTP Post vs Patch 
+    - *Should be sending PATCH request for continuing existing interview*
+- Database usage
+    - *Does Redis interview store work well going forward?*
+- How custom parameters saved 
+    - *Should change to e.g. YAML ?*
+- **How to best deploy application?**
     - Google (https://realpython.com/python-web-applications/)
     - AWS
     - Azure
-    - *Recall: Need low latency, handle multiple queries sudden influx*
+    - *Recall: Need low latency, handle multiple queries sudden influx*    
+- Basic UI
+    - *Integrate existing JS (use GPT for help)*
+        - Have next questions in top box

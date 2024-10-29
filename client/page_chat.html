@@ -1,0 +1,27 @@
+<!-- CHAT INTERFACE DESIGNED TO WORK WITH QUALTRICS -->
+<div style="width: 95%; margin-left: auto; margin-right: auto; min-width: 300px; max-width: 800px; background-color: #fff;  display: flex; flex-direction: column; padding: 1px;" class="chat-container">
+	
+	<!-- Chat Area: The conversation history goes here. Contains questions and previously written responses. -->
+	<div style="overflow-y: auto; max-height: 500px; margin-bottom: 5px; border: 2px solid #ddd; border-radius: 5px; padding: 10px; display: flex; flex-direction: column; align-items: flex-end;" id="chatArea" class="chat-area">
+		&nbsp;
+	</div>
+
+	<!-- Text input field: Respondents write their responses in this container. It sits directly below the chat area. -->
+	<div style="position: relative; margin-top: 5px" class="input-container">
+		<textarea style="width: 100%; resize: vertical; min-height: 150pt; border: 2px solid #A9A9A9; border-radius: 10px; padding: 10px; overflow: auto;" placeholder="Type your message here..." maxlength="3000" id="inputBox" class="input-box">
+		</textarea>
+	</div>
+
+	<!-- Footer: Contains optional instructions to the respondent and the submit button. Placed below the text input field.  -->
+	<div style="display: flex; justify-content: flex-end; padding-top: 10px;" class="submit-button-container">
+		<!-- Optional instructions. Leave empty if not needed. -->
+		<div style="flex-grow: 1; font-size: normal; border: none; height: 30px; line-height: 30px; padding-left: 10px; color: rgb(53, 53, 53);">
+			Please try to write at least two or three full sentences.
+		</div>
+
+		<!-- Submit button: Respondents have to click this button to submit a response. -->
+		<button style="background-color: #007AC0; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;" id="submitButton" class="submit-button">
+			Submit response
+		</button>
+	</div>
+</div>
