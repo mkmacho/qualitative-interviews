@@ -1,11 +1,11 @@
 # qualitative-interviews #
 
-Companion codebase for ["Conducting Qualitative Interviews with AI"](https://dx.doi.org/10.2139/ssrn.4583756)
-
-Set up your own interview structure (by modifying the [`parameters.py`](#parameters.py) file) and leverage [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs) to probe specified topics, smoothly transition to new topics, and gracefully close interviews with respondents. 
+Companion codebase for ["Conducting Qualitative Interviews with AI"](https://dx.doi.org/10.2139/ssrn.4583756). Set up your own interview structure and leverage [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs) to probe specified topics, smoothly transition to new topics, and gracefully close interviews with respondents. 
 
 Suggested citation:
-*Chopra, Felix and Haaland, Ingar, Conducting Qualitative Interviews with AI (2023). CESifo Working Paper No. 10666, Available at SSRN: https://ssrn.com/abstract=4583756 or http://dx.doi.org/10.2139/ssrn.4583756*
+```
+Chopra, Felix and Haaland, Ingar, Conducting Qualitative Interviews with AI (2023). CESifo Working Paper No. 10666, Available at SSRN: https://ssrn.com/abstract=4583756 or http://dx.doi.org/10.2139/ssrn.4583756
+```
 
 
 ## Table of Contents
@@ -15,21 +15,20 @@ Suggested citation:
   * [Manually](#manually)
   * [Customization](#customization)
 * [API](#api)
-  * [/next](#/next)
+  * [next](#next)
 * [App Structure](#app-structure)
-  * [parameters.py](#parameters.py)
 * [TODO](#todo)
 
 
 
 ## Usage
 
-### Requirements ###
+### Requirements
 
-The application has two main requirements: OpenAI keys and Redis backend integration. For OpenAI, you can obtain API keys [here](https://platform.openai.com/) which will be supplied as an environment variable `OPEN_AI_KEY="<YOUR_OPENAI_API_KEY>"`. For Redis, you can create a free tier account database [here](https://cloud.redis.io/#/databases) and set up the environment variables for `REDIS_HOST`, `REDIS_PASSWORD`, and `REDIS_PORT` accordingly.
+The application has two main requirements: OpenAI keys and Redis backend integration. For OpenAI, you can obtain API keys [here](https://platform.openai.com/) which will be supplied as an environment variable `OPEN_AI_KEY`. For Redis, you can create a free tier account database [here](https://cloud.redis.io/#/databases) and set up the environment variables for `REDIS_HOST`, `REDIS_PASSWORD`, and `REDIS_PORT` accordingly.
 
 
-### Docker ###
+### Docker
 
 The simplest way to then run the application is via [Docker](https://www.docker.com/products/docker-desktop/). You can easily build a Docker image containing only the necessary packages in a contained environment -- from whatever operating system!
 
@@ -56,7 +55,7 @@ docker run -d \
 Now, you can make requests to your local *http://0.0.0.0:8000/* (listening on port 8000).
 
 
-### Manually ### 
+### Manually 
 
 Otherwise, you can set it up by hand. We advise you to first create a virtual environment so as to install necessary packages in a clean environment, guaranteed of no clashing dependencies.
 
@@ -181,12 +180,12 @@ A sample of this template for *STOCK_MARKET_PARTICIPATION* interviews is display
 ```
 
 
-## API ##
+## API
 
 The main API is to retrieve the next action in the interview process. Specifically, the AI-interviewer will supply the next question to the interviewee. This is done through a request to the `/next` endpoint.
 
 
-### /next ###
+### next
 
 Given a user response (`message`) (to an interview question), the (unique) session ID of the interview (`session_id`), and the interview parameters index key to guide the interview parameters (`parameters_id`), we make a request to the application to return the subsequent step (i.e. new question or follow-up) in the interview process.
 
@@ -246,7 +245,7 @@ Example follow-up response:
 And et cetera.
 
 
-## App Structure ##
+## App Structure
 
 ```
 └── app/
@@ -266,45 +265,45 @@ And et cetera.
 ```
 
 
-### app.py ###
+### app.py
 
 All app API calls set up here.
 
-### tests.py ###
+### tests.py
 
 All API tests live here.
 
-### decorators.py ###
+### decorators.py
 
 All API decorators live here. 
 
-### schema_validators.py ###
+### schema_validators.py
 
 Validated incoming JSON schema as per [JSON Schema](http://json-schema.org/documentation.html).
 
-### parameters.py ###
+### parameters.py
 
-**Contains the interview-specific guidelines and parameters. Update or create your own LLM prompts here!**
+*Contains the interview-specific guidelines and parameters. Update or create your own LLM prompts here!*
 
-### core/logic.py ###
+### core/logic.py
 
 Endpoint responses are processed here.
 
-### core/agent.py ###
+### core/agent.py
 
 AI-interviewer (GPT integration) lives here.
 
-### core/database.py ###
+### core/database.py
 
 The InterviewManager and Reids data store integration live here.
 
-### core/auxiliary.py ###
+### core/auxiliary.py
 
 This file contains additional functions useful to the core logic.
 
 
 
-## TODO ##
+## TODO
 
 - HTTP Post vs Patch 
     - *Should be sending PATCH request for continuing existing interview*
@@ -313,11 +312,11 @@ This file contains additional functions useful to the core logic.
 - How custom parameters saved 
     - *Should change to e.g. YAML ?*
 - **How to best deploy application?**
-    - Google (https://realpython.com/python-web-applications/)
+    - [Google](https://realpython.com/python-web-applications/)
     - AWS
     - Azure
     - *Recall: Need low latency, handle multiple queries sudden influx*    
-- Basic UI
+- **Basic UI**
     - *Integrate existing JS (use GPT for help)*
         - Have next questions in top box
 - Set up defaults for output messages?
