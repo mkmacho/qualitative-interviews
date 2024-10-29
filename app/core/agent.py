@@ -1,101 +1,57 @@
 from openai import OpenAI
-import os
-from core.auxiliary import execute_queries, construct_messages
-from core.parameters import *
+from core.auxiliary import execute_queries, fill_prompt_with_interview_state
 
 
 class Agent(object):
-    def __init__(self, timeout:int=20, max_retries:int=4):
+    def __init__(self, api_key:str, timeout:int=20, max_retries:int=4):
         self.client = OpenAI(
             timeout=timeout,     # 20 seconds (default is 10 minutes)
             max_retries=max_retries,  # default is 2
-            api_key=os.environ['OPENAI_API_KEY'],
+            api_key=api_key,
         )
+
+    def load_parameters(self, parameters:dict):
+        self.parameters = parameters
+
+    def construct_query(self, tasks:list, interview_state:dict) -> dict:
+        return {
+            task: {
+                "messages": [{
+                    "role":"user", 
+                    "content": fill_prompt_with_interview_state(
+                        self.parameters[task]['prompt'], 
+                        self.parameters['open_topics'],
+                        interview_state
+                    )
+                }],
+                "model": self.parameters[task]['model'],
+                "max_tokens": self.parameters[task]['max_tokens'],
+                "temperature": self.parameters[task].get('temperature', 0)
+            } for task in tasks
+        }
+
+    def is_message_relevant(self, message:str, interview_state:dict) -> bool:
+        """ Is user answer relevant or 'on topic' to given prompt? """
+        interview_state['user_message'] = message
+        assert interview_state["chat"][-1]["role"] == "assistant"
+        response = execute_queries(
+            self.client.chat.completions.create,
+            self.construct_query(['security'], interview_state)
+        )
+        return "yes" in response["security"].lower()
         
-    def check_relevance(self, question:str, answer:str) -> bool:
-        """ Is user answer relevant or 'on topic' re: interviewer question? """
-        response = self.client.chat.completions.create(
-            messages= [{
-                "role": "user", 
-                "content": SECURITY_PROMPT.format(
-                    last_question=question,
-                    user_answer=answer,
-                )
-            }],
-            model= SECURITY_MODEL,
-            max_tokens= 2,
-        )
-        return "yes" in response.choices[0].message.content.lower()
-
-    @staticmethod
-    def _summary_query(user_prompt:str, interview:dict) -> dict:
-        return {
-            "messages": construct_messages(
-                user_prompt,
-                interview,
-                SYSTEM_SUMMARY_PROMPT
-            ),
-            "model": DEFAULT_MODEL,
-            "max_tokens": MAX_SUMMARY_LENGTH
-        }
-
-    @staticmethod
-    def _transition_query(interview:dict) -> dict:
-        return {
-            "messages": construct_messages(
-                USER_TRANSITION_PROMPT,
-                interview,
-                SYSTEM_TRANSITION_PROMPT
-            ),
-            "model": DEFAULT_MODEL,
-            "max_tokens": MAX_RESPONSE_LENGTH,
-            "temperature": TRANSITION_TEMPERATURE
-        }
-
-    @staticmethod
-    def _probe_query(interview:dict) -> dict:
-        return {
-            "messages": construct_messages(
-                USER_PROBING_PROMPT,
-                interview,
-                SYSTEM_PROBING_PROMPT
-            ),
-            "model": DEFAULT_MODEL,
-            "max_tokens": MAX_RESPONSE_LENGTH,
-            "temperature": PROBING_TEMPERATURE
-        }
-
-    def summarize(self, interview:dict, clean=False) -> dict:
-        return execute_queries(
-            self.client.chat.completions.create,
-            {
-                "SUMMARY": self._summary_query(
-                    USER_CLEANING_PROMPT if clean else USER_SUMMARY_PROMPT,
-                    interview
-                )
-            }
-        )
-
-    def probe_within_topic(self, interview:dict) -> str:
+    def probe_within_topic(self, interview_state:dict) -> (str, dict):
         response = execute_queries(
             self.client.chat.completions.create,
-            {
-                "PROBE": self._probe_query(interview)
-            }
+            self.construct_query(['probe'], interview_state)
         )
-        return response["PROBE"]["Question"], response
+        return response['probe'], response
 
-    def transition_topic(interview:dict) -> str:
+    def transition_topic(self, interview_state:dict) -> (str, dict):
         response = execute_queries(
             self.client.chat.completions.create,
-            {
-                "SUMMARY": self._summary_query(
-                    USER_SUMMARY_PROMPT,
-                    interview
-                ), 
-                "TRANSITION": self._transition_query(interview)
-            }
+            self.construct_query(['summary','transition'], interview_state)
         )
-        return response["TRANSITION"]["Question"], response
+        return response['transition'], response
 
 

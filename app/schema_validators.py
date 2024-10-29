@@ -9,38 +9,24 @@ NEXT = {
             "type": "string",
             "description": "Interviewee response"
         },
-        "first_question": {
-            "type": "string",
-            "description": "Question that began interview"
+        "parameters_id": {
+            "type": ["number", "string"],
+            "description": "Index for interview parameter set"
         },
-        "open_topics": {
-            "type":"array",
-            "description": "List of topics to cover in interview",
-            "items": { "type": "object" }
-        },           
-        "closing_questions": {
-            "type": "array",
-            "description": "Final questions to close interview",
-            "items": { "type": "string" }
-        }
     },
     "required": [
         "session_id",
-        "user_message"
+        "user_message",
+        "parameters_id"
     ],
     "type": "object"
 }
 
-LOAD = {
-    "description": "Load endpoint request schema",
+SESSION = {
     "properties": {
         "session_id": {
             "type": ["number", "string"],
             "description": "Unique interview ID"
-        },
-        "get_summary": {
-            "type": ["boolean"],
-            "description": "Directive to summarize interview"
         }
     },
     "required": ["session_id"],
@@ -49,5 +35,5 @@ LOAD = {
 
 API_SCHEMAS = {
     "NEXT_POST": NEXT,
-    "LOAD_POST": LOAD
+    "INTERVIEW_POST": SESSION
 }

@@ -16,22 +16,27 @@ def index():
 @decorators.validate_json('NEXT')
 def next():
 	payload = request.get_json(force=True)
-	response = logic.next_question(payload)
+	response = logic.next_question(**payload)
 	return jsonify(response)
 
 @app.route('/load', methods=['POST'])
 @decorators.handle_500
 @decorators.allowed_domains()
-@decorators.validate_json('LOAD')
+@decorators.validate_json()
 def load():
 	payload = request.get_json(force=True)
-	response = logic.load_interview(payload)
+	response = logic.load_interview(payload['session_id'])
 	return jsonify(response)
 
 @app.route('/delete', methods=['POST'])
 @decorators.handle_500
 @decorators.allowed_domains()
+@decorators.validate_json()
 def delete():
 	payload = request.get_json(force=True)
-	logic.delete_interview(payload)
-	return jsonify({'success':True})
+	response = logic.delete_interview(payload['session_id'])
+	return jsonify(response)
+
+
+if __name__ == "__main__":
+	app.run(host="127.0.0.1", port=8000, debug=True)

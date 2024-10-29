@@ -3,10 +3,10 @@ from functools import wraps
 from flask import make_response, jsonify, request
 import time
 import traceback as tb
-from log import Logger
-from core.parameters import WHITELISTED_DOMAINS
 from jsonschema import validate 
 from schema_validators import API_SCHEMAS
+from log import Logger
+from parameters import WHITELISTED_DOMAINS
 
 logger = Logger()
 
@@ -45,7 +45,7 @@ def allowed_domains():
 		return decorated
 	return decorator
 
-def validate_json(endpoint):
+def validate_json(endpoint:str="INTERVIEW"):
 	""" Validate incoming request using JSON Schema. """
 	def decorator(f):
 		@wraps(f)
