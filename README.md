@@ -1,23 +1,33 @@
 # qualitative-interviews #
 
-* Companion codebase for ["Conducting Qualitative Interviews with AI"](https://dx.doi.org/10.2139/ssrn.4583756)
+Companion codebase for ["Conducting Qualitative Interviews with AI"](https://dx.doi.org/10.2139/ssrn.4583756)
 
 Set up your own interview structure (by modifying the [`parameters.py`](#parameters.py) file) and leverage [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs) to probe specified topics, smoothly transition to new topics, and gracefully close interviews with respondents. 
+
+Suggested citation:
+*Chopra, Felix and Haaland, Ingar, Conducting Qualitative Interviews with AI (2023). CESifo Working Paper No. 10666, Available at SSRN: https://ssrn.com/abstract=4583756 or http://dx.doi.org/10.2139/ssrn.4583756*
 
 
 ## Table of Contents
 * [Usage](#usage)
+  * [Requirements](#requirements)
   * [Docker](#docker)
   * [Manually](#manually)
   * [Customization](#customization)
 * [API](#api)
-  * [/next](##/next)
+  * [/next](#/next)
 * [App Structure](#app-structure)
+  * [parameters.py](#parameters.py)
 * [TODO](#todo)
 
 
 
 ## Usage
+
+### Requirements ###
+
+The application has two main requirements: OpenAI keys and Redis backend integration. For OpenAI, you can obtain API keys [here](https://platform.openai.com/) which will be supplied as an environment variable `OPEN_AI_KEY="<YOUR_OPENAI_API_KEY>"`. For Redis, you can create a free tier account database [here](https://cloud.redis.io/#/databases) and set up the environment variables for `REDIS_HOST`, `REDIS_PASSWORD`, and `REDIS_PORT` accordingly.
+
 
 ### Docker ###
 
@@ -56,13 +66,18 @@ Otherwise, you can set it up by hand. We advise you to first create a virtual en
  source ./bin/activate
 ```
 
-Then clone the project and install the necessary packages with `pip`:
+Then clone the project, install the necessary packages with `pip`, and export necessary environment variables:
 
 ```bash
 git clone https://github.com/mkmacho/qualitative-interviews.git
 cd qualitative-interviews
 
 pip install -r requirements.txt
+
+export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+export REIDS_HOST="<YOUR_REDIS_HOST_FOR_DATABASE>"
+export REDIS_PASSWORD="<YOUR_REDIS_PASSWORD>"
+export REDIS_PORT="<YOUR_REDIS_HOST_PORT>" 
 ```
 
 Finally, start serving the application by running:
@@ -78,11 +93,13 @@ Now, you can make requests to your local *http://0.0.0.0:8000/* (listening on po
 
 To customize the structure of the interviews (e.g. the topics covered, the duration, the LLM prompts, etc.) simply add or edit a new `python` dictionary containing relevant information for your project.
 
-Currently, in `parameters.py` you will see one element in `INTERVIEW_PARAMETERS`: *STOCK_MARKET_PARTICIPATION*. This holds the guidelines for interviewing respondents on their lack of participation in the stock market. Specifically, it contains elements:
+Currently, in `parameters.py` you will see one element in `INTERVIEW_PARAMETERS`: *STOCK_MARKET_PARTICIPATION*. This interview parameters object holds the guidelines for interviewing respondents on their lack of participation in the stock market, but generally it will be beneficial to use this as a template for constructing your own interview parameters.
+
+Specifically, the parameters object must contain elements:
 
 * *first_question*: the initial prompt that begins the interview
 * *open_topics*: the list of topic dictionaries which include the `topic` as well as the `length`, indicating for how many questions to cover this topic
-* *closing_questions*: the (fixed) list of questions/comments to end the interview with
+* *closing_questions*: the (fixed) list of questions/comments (if any) with which to end the interview
 * *end_of_interview_message*: the message to display at the end of the interview
 * *termination_message*: the message to display in the event the user responds to an ended interview
 * *flagged_message*: the message to display to adversarial behavior
@@ -91,7 +108,7 @@ Currently, in `parameters.py` you will see one element in `INTERVIEW_PARAMETERS`
 As well as elements defining the LLM-interactions:
 
 * *summary*: if/how you would like the AI-interviewer to summarize the interview thus far
-* *transition*: if/how you would like the LLM to transition topics 
+* *transition*: if/how you would like the AI-interviewer to transition topics 
 * *probe*: if/how you would like the AI-interviewer to probe topics
 * *security*: if/how you would like the AI-interviewer to ascertain user message relevance
 
@@ -251,15 +268,15 @@ And et cetera.
 
 ### app.py ###
 
-All app API calls will be set up here.
+All app API calls set up here.
 
 ### tests.py ###
 
-All API tests will be added here.
+All API tests live here.
 
 ### decorators.py ###
 
-All API decorators will sit here. 
+All API decorators live here. 
 
 ### schema_validators.py ###
 
@@ -267,23 +284,23 @@ Validated incoming JSON schema as per [JSON Schema](http://json-schema.org/docum
 
 ### parameters.py ###
 
-**Contains the interview-specific parameters. Update or create your own LLM prompts!**
+**Contains the interview-specific guidelines and parameters. Update or create your own LLM prompts here!**
 
 ### core/logic.py ###
 
-The main endpoint requests the next interview action from here.
+Endpoint responses are processed here.
 
 ### core/agent.py ###
 
-This file contains the AI-interviewer GPT integration.
+AI-interviewer (GPT integration) lives here.
 
 ### core/database.py ###
 
-This file contains the InterviewManager responsible for storing the conversation.
+The InterviewManager and Reids data store integration live here.
 
 ### core/auxiliary.py ###
 
-This file contains additional functions useful to the core.
+This file contains additional functions useful to the core logic.
 
 
 
@@ -303,3 +320,5 @@ This file contains additional functions useful to the core.
 - Basic UI
     - *Integrate existing JS (use GPT for help)*
         - Have next questions in top box
+- Set up defaults for output messages?
+
