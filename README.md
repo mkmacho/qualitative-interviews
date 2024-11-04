@@ -189,7 +189,7 @@ The main API is to retrieve the next action in the interview process. Specifical
 
 Given a user response (`message`) (to an interview question), the (unique) session ID of the interview (`session_id`), and the interview parameters index key to guide the interview parameters (`parameters_id`), we make a request to the application to return the subsequent step (i.e. new question or follow-up) in the interview process.
 
-The API can be called e.g. via [Postman](https://www.postman.com/) as follows:
+The API can be tested e.g. via [Postman](https://www.postman.com/) as follows:
 
 `POST http://0.0.0.0:8000/next` 
 
@@ -203,7 +203,7 @@ response = requests.post("http://0.0.0.0:8000/next", headers=headers, json=paylo
 Example headers:
 ```
 {
-    "origin":"https://nhh.eu.qualtrics.com"
+    "origin":"http://0.0.0.0:8000"
 }
 ```
 
@@ -259,6 +259,7 @@ And et cetera.
     ├───── logic.py
     ├───── agent.py
     ├───── database.py
+    ├───── manager.py
     ├───── auxiliary.py
     ├── client/    
     ├───── [client-side UI in progress]
@@ -295,7 +296,11 @@ AI-interviewer (GPT integration) lives here.
 
 ### core/database.py
 
-The InterviewManager and Reids data store integration live here.
+The Redis data store integration live here.
+
+### core/manager.py
+
+The interview manager processes run through here.
 
 ### core/auxiliary.py
 
@@ -306,7 +311,7 @@ This file contains additional functions useful to the core logic.
 ## TODO
 
 - HTTP Post vs Patch 
-    - *Should be sending PATCH request for continuing existing interview*
+    - *Should be sending PATCH request for continuing existing interview?*
 - Database usage
     - *Does Redis interview store work well going forward?*
 - How custom parameters saved 
@@ -316,8 +321,13 @@ This file contains additional functions useful to the core logic.
     - AWS
     - Azure
     - *Recall: Need low latency, handle multiple queries sudden influx*    
-- **Basic UI**
-    - *Integrate existing JS (use GPT for help)*
-        - Have next questions in top box
 - Set up defaults for output messages?
 
+
+## In Progress
+
+- **Basic UI**
+    - *Integrated existing javascript into HTML front-end*
+        - Seems stable, needs extensive testing
+        - 'Enter' giving error
+        - update tests/readme to reflect latest

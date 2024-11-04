@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request
+from flask import jsonify, render_template, make_response
 import decorators
 from core import logic
 
@@ -6,36 +7,35 @@ app = Flask(__name__)
 app.error_handler_spec[None] = decorators.wrap_flask_errors()
 app.add_url_rule('/healthcheck', 'healthcheck', lambda: ('', 200))
 
-@app.route('/')
-def index():
-	return 'Running!'
+@app.route('/<interview_id>/<session_id>', methods=['GET'])
+@decorators.handle_500
+def index(interview_id:str, session_id:str):
+	""" Landing (start) page for interview_id session_id. """
+	response = logic.begin_interview_session(interview_id, session_id)
+	return render_template('chat.html', data=response)
 
 @app.route('/next', methods=['POST'])
 @decorators.handle_500
 @decorators.allowed_domains()
-@decorators.validate_json('NEXT')
 def next():
+	""" Internally called to continue interview. """
 	payload = request.get_json(force=True)
 	response = logic.next_question(**payload)
 	return jsonify(response)
 
-@app.route('/load', methods=['POST'])
+@app.route('/load/<session_id>', methods=['GET'])
 @decorators.handle_500
-@decorators.allowed_domains()
-@decorators.validate_json()
-def load():
-	payload = request.get_json(force=True)
-	response = logic.load_interview(payload['session_id'])
-	return jsonify(response)
+def load(session_id:str):
+	""" Load remote database entry for interview session_id. """
+	session = logic.load_interview_session(session_id)
+	return jsonify(session)
 
-@app.route('/delete', methods=['POST'])
+@app.route('/delete/<session_id>', methods=['GET'])
 @decorators.handle_500
-@decorators.allowed_domains()
-@decorators.validate_json()
-def delete():
-	payload = request.get_json(force=True)
-	response = logic.delete_interview(payload['session_id'])
-	return jsonify(response)
+def delete(session_id:str):
+	""" Delete remote database entry for interview session_id. """
+	logic.delete_interview_session(session_id)
+	return make_response(f"Successfully deleted session '{session_id}'.")
 
 
 if __name__ == "__main__":

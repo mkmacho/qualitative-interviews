@@ -8,6 +8,7 @@ from schema_validators import API_SCHEMAS
 from log import Logger
 from parameters import WHITELISTED_DOMAINS
 
+# Specialized logging logger
 logger = Logger()
 
 def wrap_flask_errors():
@@ -74,7 +75,8 @@ def response_log(response, status, start_time, key="info"):
 		"duration":time.time() - start_time,
 		"response":response,
 		"http_code":status,
-		"type":response["type"] if response.get("tb") else "RequestSuccessful"
+		"type":response["type"] if (isinstance(response, dict) and 
+			response.get("tb")) else "RequestSuccessful"
 	})
 
 def handle_500(f):
@@ -83,7 +85,11 @@ def handle_500(f):
 		start_time = time.time()
 		try:
 			response = f(*args, **kwargs)
-			response_log(response.json, response.status_code, start_time)
+			response_log(
+				getattr(response, 'json', '<HTML>'), 
+				getattr(response, 'status_code', 200), 
+				start_time
+			)
 		except Exception as e:
 			http_code = getattr(e, "http_code", None) or getattr(e, "code", 500)
 			message = str(e) or getattr(e, "message", "Service failed")

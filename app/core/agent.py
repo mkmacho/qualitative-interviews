@@ -1,17 +1,22 @@
+import os
+import logging
 from openai import OpenAI
 from core.auxiliary import execute_queries, fill_prompt_with_interview_state
 
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 class Agent(object):
-    def __init__(self, api_key:str, timeout:int=20, max_retries:int=4):
+    def __init__(self, api_key:str=OPENAI_API_KEY, timeout:int=20, max_retries:int=4):
         self.client = OpenAI(
-            timeout=timeout,     # 20 seconds (default is 10 minutes)
-            max_retries=max_retries,  # default is 2
-            api_key=api_key,
+            api_key=api_key, 
+            timeout=timeout, 
+            max_retries=max_retries
         )
+        logging.info("OpenAI client instantiated -- should happen only once!")
 
     def load_parameters(self, parameters:dict):
         self.parameters = parameters
+        logging.info("Interview-specific agent instructions loaded.")
 
     def construct_query(self, tasks:list, interview_state:dict) -> dict:
         return {

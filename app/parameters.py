@@ -1,11 +1,12 @@
 WHITELISTED_DOMAINS = [
 	"https://nhh.eu.qualtrics.com", 
 	"https://cebi.eu.qualtrics.com",
-	"MY_TEST_DOMAIN"
+	"http://0.0.0.0:8000"
 ]
 
 INTERVIEW_PARAMETERS = {
-	"STOCK_MARKET_PARTICIPATION": {
+	"STOCK_MARKET": {
+		"_description": "Interview structure to investigate stock market participation (or lack thereof).",
 		"first_question": "I am interested in learning more about why you currently do not own any stocks or stock mutual funds. Can you help me understand the main factors or reasons why you are not participating in the stock market?",
 		"open_topics": [
 			{
@@ -65,7 +66,8 @@ INTERVIEW_PARAMETERS = {
 
 				YOUR RESPONSE:
 			""",
-			"max_tokens": 1000
+			"max_tokens": 1000,
+			"model": "gpt-4o"
 		},
 		"transition": {
 			"prompt": """
@@ -144,6 +146,10 @@ INTERVIEW_PARAMETERS = {
 			"model": "gpt-4o-mini",
 			"max_tokens": 2
 		}
+	},
+	"VOTING": {
+		"_description": "Interview structure to investigate voting behaviors.",
+		"first_question": "I am interested in learning more about why you have not voted in local elections in the past two years. Can you help me understand the main factors or reasons why you are not participating in local elections?"
 	}
 }
 

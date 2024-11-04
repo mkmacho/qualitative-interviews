@@ -10,16 +10,14 @@ class APITestCase(unittest.TestCase):
 			response = client.get('/healthcheck')
 		self.assertEqual(response.status_code, 200)
 
-	def test_running(self):
+	def test_start(self):
 		with app.test_client() as client:
-			response = client.get('/')
+			response = client.get('/STOCK_MARKET_PARTICIPATION/TEST_SESSION')
 		self.assertEqual(response.status_code, 200)
-		self.assertEqual(response.data, bytes('Running!', 'utf-8'))
 
 	def test_load(self):
 		with app.test_client() as client:
 			response = client.post('/load', 
-				headers={"origin":"MY_TEST_DOMAIN"},
 				data=json.dumps({
 					"session_id": "STOCK_MARKET_TEST_SESSION",
 				}), 
@@ -31,13 +29,8 @@ class APITestCase(unittest.TestCase):
 
 	def test_interview(self):
 		with app.test_client() as client:
-			response = client.post('/next', 
-				headers={"origin":"MY_TEST_DOMAIN"},
-				data=json.dumps({
-					"user_message": "I can't afford it and the stock market is rigged.",
-					"session_id": "STOCK_MARKET_TEST_SESSION",
-					"parameters_id": "STOCK_MARKET_PARTICIPATION"
-				}), 
+			response = client.post('/STOCK_MARKET_PARTICIPATION/TEST_SESSION/next', 
+				data=json.dumps({"user_message": "I can't afford it and the stock market is rigged."}), 
 				content_type='application/json'
 			)
 		self.assertEqual(response.status_code, 200, f"Received response:\n{response.text}")
