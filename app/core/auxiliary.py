@@ -80,7 +80,7 @@ def execute_queries(query, agent_args:dict) -> dict:
         }
         for future in as_completed(future_to_agent):
             agent = future_to_agent[future]
-            resp = future.result().choices[0].message.content.strip("\n '''")
+            resp = future.result().choices[0].message.content.strip("\n\" '''")
             suggestions[agent] = resp
 
     logging.info("Query took {:.2f} seconds.".format(time.time() - st))
