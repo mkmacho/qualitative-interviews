@@ -183,7 +183,7 @@ A sample of this template for *STOCK_MARKET_PARTICIPATION* interviews is display
 
 The main API is to begin and host an interview. This is done by making a GET request with the interview `parameters_id` and the interview `session_id` in the URL. 
 
-For example, given an interview parameter ID (e.g. `parameters_id == 'STOCK_MARKET`) and the (unique) session ID of the interview (`session_id == 'TEST_SESSION`), we can make a request to the host and port our application is serving on plus these keys, in this case just opening `http://0.0.0.0:8000/STOCK_MARKET/TEST_SESSION` on any browser. The web page will show you the beginning question of the interview, as specified in the parameters corresponding to the `parameters_id` you supplied, and prompt the user to answer this question. Each subsequent response by the user will be processed by the 'AI-interviewer' and the web page will dynamically update to show this ongoing chat. 
+For example, given an interview parameter ID (e.g. `parameters_id == 'STOCK_MARKET'`) and the (unique) session ID of the interview (`session_id == 'TEST_SESSION'`), we can make a request to the host and port our application is serving on plus these keys, in this case just opening `http://0.0.0.0:8000/STOCK_MARKET/TEST_SESSION` on any browser. The web page will show you the beginning question of the interview, as specified in the parameters corresponding to the `parameters_id` you supplied, and prompt the user to answer this question. Each subsequent response by the user will be processed by the 'AI-interviewer' and the web page will dynamically update to show this ongoing chat. 
 
 Note that the dynamic updating is done in the back end through a `POST` request to the internal `/next` endpoint which, for a given session and user reply, determines the following message to be shown.
 
@@ -309,25 +309,26 @@ This file the HTML landing page users see and interact with. *Update the HTML or
 
 
 
-## TODO
-
-- HTTP Post vs Patch 
-    - *Should be sending PATCH request for continuing existing interview?*
-- Database usage
-    - *Does Redis interview store work well going forward?*
-- How custom parameters saved 
-    - *Should change to e.g. YAML ?*
-- **How to best deploy application?**
-    - [Google](https://realpython.com/python-web-applications/)
-    - AWS
-    - Azure
-    - *Recall: Need low latency, handle multiple queries sudden influx*    
-- Set up defaults for output messages?
-- Clean AI responses better, e.g.
-    - 'summary': '**Interview Summary:**\n\nThe interviewee expresses a strong belief that the stock market is ...'
-
-## In Progress
+## TODO (Week of 05/11/2024)
 
 - **Basic UI**
     - *Integrated existing javascript into HTML front-end*
-        - update tests/readme to reflect latest
+    - Further/final testing 06/11
+- Database
+    - *Does Redis interview store work well going forward?*
+    - Have parameter for set of (few) popular DBs (e.g. MongoDB)
+    - Table this for future...
+- **How to best deploy application?**
+    - [Google](https://realpython.com/python-web-applications/)
+    - AWS
+        - *Will start with trying to deploy here 06/12!*
+    - Azure
+        - Potentially easy for academics to use through institutions
+    - *Regardless, want either easy script set-up or detailed manual instructions*
+- **Stress testing**
+    - *Recall: Need low latency, handle multiple queries sudden influx*    
+    - Is bottleneck given machine/instance memory limit?
+    - Can set (rule) number of child processes/workers?
+    - Is our API (similarly OpenAI) parallel or concurrent?
+
+
