@@ -4,7 +4,6 @@ import re
 import time
 import logging 
 
-
 def is_code(message:str, threshold:int=5) -> bool:
     """ Check if the message contains code as proxied by certain symbols. """
     counts = Counter(message)
@@ -12,23 +11,23 @@ def is_code(message:str, threshold:int=5) -> bool:
     code_count = sum(counts[symbol] for symbol in code_symbols)
     return code_count > (threshold * (1 + len(message) / 100.0))
 
-def clean(output_str:str):
-    cleaned = re.sub("[\"\'\''\''':]", "", output_str)
-    cleaned = re.sub("\n", " ", cleaned)
-    cleaned = re.sub(r"\+", " ", cleaned)
-    return cleaned.strip()
-
-def parsed(response_str:str) -> dict:
-    """ Parse response into dictionary based on pre-set keys. """
-    logging.info(f"GPT response: '{response_str}'...")
-    section_names = ["Justification", "Choice", "Summary", "Question", "New_Topic_ID"]
-    tag_pattern =  "(" + r"\: |".join(section_names) + ")"
-    sections = re.split(tag_pattern, response_str, flags=re.DOTALL)
-    result = {}
-    for i in range(len(sections) - 1):
-        if sections[i].split(': ')[0] in section_names:
-            result[clean(sections[i])] = clean(sections[i+1])
-    return result
+def cleaned(response, task:str):
+    output = response.choices[0].message.content.strip("\n\" '''")
+    logging.info(f"GPT response: '{output}'")
+    if task in ['summary']:
+        return output
+    sections = re.sub("[\n'''*]", "", output).split(':')
+    if len(sections) == 1:
+        return sections[0].strip()
+    elif len(sections) == 2:
+        logging.warning("Multiple sections!")
+        prompt = sections[0].lower()
+        if "question" in prompt or "message" in prompt:
+            return sections[1].strip()
+        else:
+            raise ValueError("Received unknown GPT response")
+    else:
+        raise ValueError("Received unknown GPT response")
 
 def current_topic_history(chat:list) -> str:
     """ Convert messages from current topic into one string. """
@@ -59,31 +58,31 @@ def fill_prompt_with_interview_state(template:str, topics:list, interview_state:
     assert not re.findall(r"\{[^{}]+\}", prompt)
     return prompt 
 
-def execute_queries(query, agent_args:dict) -> dict:
+def execute_queries(query, task_args:dict) -> dict:
     """ 
     Execute queries (concurrently if multiple).
 
     Args:
         query: function to execute
-        agent_args: (dict) of arguments for each agent's query
-        parse_output: (bool) to parse output for task specific response
+        task_args: (dict) of arguments for each task's query
     Returns:
-        suggestions (dict): {agent_name: agent_output} 
+        suggestions (dict): {task: output} 
     """
     st = time.time()
     suggestions = {}
     with ThreadPoolExecutor() as executor:
-        # Start the load operations and mark each future with its agent
-        future_to_agent = {
-            executor.submit(query, **kwargs): agent 
-                for agent, kwargs in agent_args.items()
+        futures = {
+            executor.submit(query, **kwargs): task 
+                for task, kwargs in task_args.items()
         }
-        for future in as_completed(future_to_agent):
-            agent = future_to_agent[future]
-            resp = future.result().choices[0].message.content.strip("\n\" '''")
-            suggestions[agent] = resp
+        for future in as_completed(futures):
+            task = futures[future]
+            suggestions[task] = cleaned(future.result(), task)
 
-    logging.info("Query took {:.2f} seconds.".format(time.time() - st))
+    logging.info("Query took {:.2f} seconds, returned: {}".format(
+        time.time() - st,
+        suggestions
+    ))
     return suggestions
 
 

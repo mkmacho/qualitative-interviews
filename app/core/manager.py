@@ -1,4 +1,3 @@
-import json
 import time
 import logging
 
@@ -37,7 +36,7 @@ class InterviewManager(object):
             'terminated': False,  
             'summary': '',
             'outputs': [],
-            'max_flags_allowed': parameters.get('max_flags_allowed', 4),
+            'max_flags_allowed': parameters.get('max_flags_allowed', 3),
             'parameters': parameters
         }
         # Add starting interview question to transcript
@@ -52,28 +51,18 @@ class InterviewManager(object):
         logging.info(f"Resumed existing interview session '{self.session_id}'")
         return self
 
-    def get_session(self) -> dict:
-        """ Get data associated with current interview session. """
-        return self.data
+    def get_session_info(self, key:str=None):
+        """ Get data associated with current interview session (key). """
+        return self.data.get(key) or self.data
 
     def is_terminated(self) -> bool:
         """ If interview has been terminated. """
         return self.data['terminated']
 
-    def get_summary(self) -> str:
-        """ Return summary of interview. """
-        summary = self.data['summary']
-        if not summary:
-            logging.error("No summary: return empty string!")
-        return summary
-
-    def flag_risk(self, user_reply:str):
+    def flag_risk(self, message:str):
         """ Flag possible security risk. """
-        self.data["flagged_messages"].append((
-            user_reply, 
-            int(time.time())
-        ))
-        logging.warning("Flagging possible risk...")
+        self.data["flagged_messages"].append((message, int(time.time())))
+        logging.warning("Flagging message for possible risk...")
 
     def flagged_too_often(self) -> bool:
         """ Check if the conversation has been flagged too often. """
@@ -104,7 +93,7 @@ class InterviewManager(object):
         self.data["terminated"] = True
         logging.info(f"Terminating interview because: '{reason}'")
 
-    def update_summary(self, summary:str, agent:object):
+    def update_summary(self, summary:str):
         """ Update summary of prior interview. """
         self.data["summary"] = summary
         logging.info("Successfully added summary to history.")

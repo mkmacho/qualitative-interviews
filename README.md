@@ -15,7 +15,6 @@ Chopra, Felix and Haaland, Ingar, Conducting Qualitative Interviews with AI (202
   * [Manually](#manually)
   * [Customization](#customization)
 * [API](#api)
-  * [next](#next)
 * [App Structure](#app-structure)
 * [TODO](#todo)
 
@@ -182,18 +181,16 @@ A sample of this template for *STOCK_MARKET_PARTICIPATION* interviews is display
 
 ## API
 
-The main API is to retrieve the next action in the interview process. Specifically, the AI-interviewer will supply the next question to the interviewee. This is done through a request to the `/next` endpoint.
+The main API is to begin and host an interview. This is done by making a GET request with the interview `parameters_id` and the interview `session_id` in the URL. 
+
+For example, given an interview parameter ID (e.g. `parameters_id == 'STOCK_MARKET`) and the (unique) session ID of the interview (`session_id == 'TEST_SESSION`), we can make a request to the host and port our application is serving on plus these keys, in this case just opening `http://0.0.0.0:8000/STOCK_MARKET/TEST_SESSION` on any browser. The web page will show you the beginning question of the interview, as specified in the parameters corresponding to the `parameters_id` you supplied, and prompt the user to answer this question. Each subsequent response by the user will be processed by the 'AI-interviewer' and the web page will dynamically update to show this ongoing chat. 
+
+Note that the dynamic updating is done in the back end through a `POST` request to the internal `/next` endpoint which, for a given session and user reply, determines the following message to be shown.
 
 
-### next
+### Testing 
 
-Given a user response (`message`) (to an interview question), the (unique) session ID of the interview (`session_id`), and the interview parameters index key to guide the interview parameters (`parameters_id`), we make a request to the application to return the subsequent step (i.e. new question or follow-up) in the interview process.
-
-The API can be tested e.g. via [Postman](https://www.postman.com/) as follows:
-
-`POST http://0.0.0.0:8000/next` 
-
-or through python as:
+You can test the `/next` endpoint through Python as follows:
 
 ```python
 import requests
@@ -211,17 +208,17 @@ Example starting payload:
 ```
 {
     "user_message": "I can't afford it and the stock market is rigged.",
-    "session_id": "STOCK_MARKET_TEST_SESSION",
-    "parameters_id": "STOCK_MARKET_PARTICIPATION"
+    "session_id": "TEST_SESSION",
 }
 ```
 
-This will return, if successful, a JSON with a `message` field that contains the next directive.
+This will return, if successful, a JSON with a `message` field that contains the next directive (as well as the `session_id`):
 
 Example return:
 ```
 {
-    'message': 'Could you elaborate on what you mean by the stock market being rigged? What specific aspects or experiences lead you to feel this way?', 
+    'message': 'Could you elaborate on what you mean by the stock market being rigged? What specific aspects or experiences lead you to feel this way?',
+    'session_id': 'TEST_SESSION'
 }
 ```
 
@@ -230,15 +227,15 @@ Example follow-up payload:
 ```
 {
     "user_message": "People like me never get ahead, only the super rich and big trading firms win.  I don't want to be swindled.",
-    "session_id": "STOCK_MARKET_TEST_SESSION",
-    "parameters_id": "STOCK_MARKET_PARTICIPATION"
+    "session_id": "TEST_SESSION"
 }
 ```
 
 Example follow-up response:
 ```
 {
-    'message': 'What specific events or information have you come across that reinforce your belief that the stock market primarily benefits the wealthy and large trading firms?'}
+    'message': 'What specific events or information have you come across that reinforce your belief that the stock market primarily benefits the wealthy and large trading firms?',
+    'session_id': 'TEST_SESSION'
 }
 ```
 
@@ -261,8 +258,8 @@ And et cetera.
     ├───── database.py
     ├───── manager.py
     ├───── auxiliary.py
-    ├── client/    
-    ├───── [client-side UI in progress]
+    ├── templates/    
+    ├───── chat.html    
 ```
 
 
@@ -284,7 +281,7 @@ Validated incoming JSON schema as per [JSON Schema](http://json-schema.org/docum
 
 ### parameters.py
 
-*Contains the interview-specific guidelines and parameters. Update or create your own LLM prompts here!*
+Contains the interview-specific guidelines and parameters. *Update or create your own LLM prompts here!*
 
 ### core/logic.py
 
@@ -306,6 +303,10 @@ The interview manager processes run through here.
 
 This file contains additional functions useful to the core logic.
 
+### templates/html.py
+
+This file the HTML landing page users see and interact with. *Update the HTML or Javascript to reflect personal taste!*
+
 
 
 ## TODO
@@ -322,12 +323,11 @@ This file contains additional functions useful to the core logic.
     - Azure
     - *Recall: Need low latency, handle multiple queries sudden influx*    
 - Set up defaults for output messages?
-
+- Clean AI responses better, e.g.
+    - 'summary': '**Interview Summary:**\n\nThe interviewee expresses a strong belief that the stock market is ...'
 
 ## In Progress
 
 - **Basic UI**
     - *Integrated existing javascript into HTML front-end*
-        - Seems stable, needs extensive testing
-        - 'Enter' giving error
         - update tests/readme to reflect latest
