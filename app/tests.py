@@ -10,35 +10,36 @@ class APITestCase(unittest.TestCase):
 			response = client.get('/healthcheck')
 		self.assertEqual(response.status_code, 200)
 
-	def test_start(self):
-		with app.test_client() as client:
-			response = client.get('/STOCK_MARKET_PARTICIPATION/TEST_SESSION')
-		self.assertEqual(response.status_code, 200)
-
 	def test_load(self):
 		with app.test_client() as client:
-			response = client.post('/load', 
-				data=json.dumps({
-					"session_id": "STOCK_MARKET_TEST_SESSION",
-				}), 
-				content_type='application/json'
-			)
-		self.assertEqual(response.status_code, 200, f"Received response:\n{response.text}")
-		body = json.loads(response.data.decode('utf8')) if isinstance(response.data, bytes) else json.loads(response.data)
-		print(f"Received 'load' response: {body}")
+			response = client.get('/load/TEST_SESSION')
+		self.assertEqual(response.status_code, 200)
+		print(f"\nReceived 'load' response: {json.loads(response.data)}\n")
 
 	def test_interview(self):
 		with app.test_client() as client:
-			response = client.post('/STOCK_MARKET_PARTICIPATION/TEST_SESSION/next', 
-				data=json.dumps({"user_message": "I can't afford it and the stock market is rigged."}), 
+			r = client.get('/STOCK_MARKET/TEST_SESSION')
+			self.assertEqual(r.status_code, 200)
+			response = client.post('/next', 
+				headers={"origin": "http://0.0.0.0:8000"},
+				data=json.dumps({
+					"user_message": "I can't afford it and the stock market is rigged.",
+					"session_id": "TEST_SESSION"
+				}), 
 				content_type='application/json'
 			)
-		self.assertEqual(response.status_code, 200, f"Received response:\n{response.text}")
-		body = json.loads(response.data.decode('utf8')) if isinstance(response.data, bytes) else json.loads(response.data)
+		self.assertEqual(response.status_code, 200)
+		body = json.loads(response.data)
 		self.assertIsInstance(body, dict)
 		self.assertIn('message', body)
 		self.assertIsInstance(body['message'], str)
-		print(f"Received response: {body['message']}")
+		print(f"\nReceived 'next' response: {body['message']}\n")
+
+	def test_delete(self):
+		with app.test_client() as client:
+			response = client.get('/delete/TEST_SESSION')
+		self.assertEqual(response.status_code, 200)
+		print(f"\nReceived 'delete' response: {response.text}\n")
 
 
 if __name__ == '__main__':

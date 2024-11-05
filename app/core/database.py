@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from redis import Redis
-from redis.exceptions import ConnectionError as RedisConnectionError
+from redis.exceptions import ConnectionError
 
 
 class DatabaseManager(object):
@@ -22,8 +22,8 @@ class DatabaseManager(object):
         """
         try:
             self.client.keys()
-        except RedisConnectionError:
-            raise RedisConnectionError("Database connection failed. Check credentials.")
+        except ConnectionError:
+            raise ConnectionError("Database connection failed. Check credentials.")
         logging.info("Redis connection established -- should happen only once!")
 
     def load_remote_session(self, session_id:str) -> dict:

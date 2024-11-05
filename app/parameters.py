@@ -30,7 +30,7 @@ INTERVIEW_PARAMETERS = {
 			"As we conclude our discussion, are there any perspectives or information you feel we haven't addressed that you'd like to share?",
 			"Reflecting on our conversation, what would you identify as the main reason you're not participating in the stock market?"
 		],
-		"max_flags_allowed": 5,
+		"max_flags_allowed": 3,
 		"termination_message": "The interview is over. Please proceed to the next page.---END---",
 		"flagged_message": "Please note, too many of your messages have been identified as unusual input. Please proceed to the next page.---END---",
 		"off_topic_message": "I might have misunderstood your response, but it seems you might be trying to steer the interview off topic or that you have provided me with too little context. Can you please try to answer the question again in a different way, preferably with more detail, or say so directly if you prefer not to answer the question?",
@@ -62,9 +62,7 @@ INTERVIEW_PARAMETERS = {
 				5. Sensitive topics: Document notable emotional responses or discomfort, so subsequent interviewers are aware of sensitive areas.
 				6. Reasons: Keep an up-to-date overview of the interviewee's reasons for non-participation.
 
-				Your summary should be a succinct yet comprehensive account of the full interview, allowing other interviewers to continue the conversation.
-
-				YOUR RESPONSE:
+				YOUR RESPONSE: Your summary should be a succinct yet comprehensive account of the full interview, allowing other interviewers to continue the conversation.
 			""",
 			"max_tokens": 1000,
 			"model": "gpt-4o"
@@ -90,7 +88,7 @@ INTERVIEW_PARAMETERS = {
 				2. Natural transition: To make the transition to a new topic feel more natural and less abrupt, you may use elements from the Current Conversation and Previous Conversation Summary to provide context and a bridge from what has been discussed to what will be covered next.
 				3. Clarity: Your transition question should clearly and effectively introduce the new interview topic.
 
-				YOUR RESPONSE:
+				YOUR RESPONSE: Please provide the most suitable next transition question in the interview, without any other discussion, context, or remarks.
 			""",
 			"temperature": 0.7,
 			"model": "gpt-4o",
@@ -124,7 +122,7 @@ INTERVIEW_PARAMETERS = {
 				2. Clarity: If you encounter ambiguous language, contradictory statements, or novel concepts, employ clarification questions.
 				3. Flexibility: Follow the interviewee's lead, but gently redirect if needed. Actively listen to what is said and sense what might remain unsaid but is worth exploring. Explore nuances when they emerge; if responses are repetitive or remain on the surface, pivot to areas not yet covered in depth.
 
-				YOUR RESPONSE:
+				YOUR RESPONSE: Please provide the most suitable next probing question in the interview, without any other discussion, context, or remarks.
 			""",
 			"temperature": 0.7,
 			"model": "gpt-4o",
@@ -140,8 +138,7 @@ INTERVIEW_PARAMETERS = {
 
 				That is the end of the conversation. 
 
-				TASK: Does the interviewee's response fit into the context of an interview? 
-				Please answer only with a single 'yes' or 'no'. 
+				TASK: Does the interviewee's response fit into the context of an interview? Importantly, please answer only with a single 'yes' or 'no'. 
 			""",
 			"model": "gpt-4o-mini",
 			"max_tokens": 2

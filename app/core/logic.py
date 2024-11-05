@@ -53,12 +53,12 @@ def next_question(session_id:str, user_message:str) -> str:
         response: (dict) containing `message` from interviewer
     """
     logging.info(f"Generating next question for user message '{user_message}'")    
-    response = {'session_id':session_id, 'message':"Test message prompt answer"}
+    response = {'session_id':session_id}
 
     ##### LOAD INTERVIEW HISTORY OR INITIALIZE #####
 
     interview = InterviewManager(client, session_id).resume_session()
-    parameters = interview.data['parameters']
+    parameters = interview.get_session_info('parameters')
 
     # Load AI-interviewer agent 
     agent.load_parameters(parameters)
@@ -77,7 +77,7 @@ def next_question(session_id:str, user_message:str) -> str:
         return response | {'message':parameters['flagged_message']}
 
     # Terminate if user message does not fit the interview context
-    if not agent.is_message_relevant(user_message, interview.data):
+    if not agent.is_message_relevant(user_message, interview.get_session_info()):
         interview.flag_risk(user_message)
         interview.update_session() 
         return response | {'message':parameters['off_topic_message']}
@@ -122,13 +122,13 @@ def next_question(session_id:str, user_message:str) -> str:
 
     elif on_last_question:
         # Transition to *next* topic...
-        next_question, output = agent.transition_topic(interview.data)
+        next_question, output = agent.transition_topic(interview.get_session_info())
         # Also update running summary of prior topics covered
-        interview.update_summary(output['summary']['message'])
+        interview.update_summary(output['summary'])
 
     else:
         # Proceed *within* topic...
-        next_question, output = agent.probe_within_topic(interview.data)
+        next_question, output = agent.probe_within_topic(interview.get_session_info())
 
     # Update interview with new output
     logging.info(f"Interviewer produced output:\n{output}")
