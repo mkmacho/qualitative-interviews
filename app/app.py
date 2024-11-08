@@ -7,9 +7,13 @@ app = Flask(__name__)
 app.error_handler_spec[None] = decorators.wrap_flask_errors()
 app.add_url_rule('/healthcheck', 'healthcheck', lambda: ('', 200))
 
+@app.route('/', methods=['GET'])
+def index():
+	return 'Running!'
+
 @app.route('/<interview_id>/<session_id>', methods=['GET'])
 @decorators.handle_500
-def index(interview_id:str, session_id:str):
+def landing(interview_id:str, session_id:str):
 	""" Landing (start) page for interview_id session_id. """
 	response = logic.begin_interview_session(interview_id, session_id)
 	return render_template('chat.html', data=response)
