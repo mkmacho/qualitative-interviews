@@ -3,7 +3,7 @@ WHITELISTED_DOMAINS = [
 	"https://cebi.eu.qualtrics.com",
 	"http://0.0.0.0:8000",
 	"http://127.0.0.1:8000",
-	"http://188.166.37.68"
+	"http://188.166.37.68:8000"
 ]
 
 INTERVIEW_PARAMETERS = {
