@@ -66,7 +66,7 @@ class InterviewManager(object):
 
     def flagged_too_often(self) -> bool:
         """ Check if the conversation has been flagged too often. """
-        if len(self.data['flagged_messages']) > self.data['max_flags_allowed']:
+        if len(self.data['flagged_messages']) >= self.data['max_flags_allowed']:
             self.terminate("security_flags_exceeded")
             logging.error("Flagged too often: quitting!")
             return True        

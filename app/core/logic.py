@@ -67,8 +67,9 @@ def next_question(session_id:str, user_message:str) -> str:
     if interview.is_terminated():
         return response | {'message':parameters['termination_message']}
 
-    # Flag if user sending code or repeating messages
-    if interview.repeated_messages(user_message) or is_code(user_message):
+    # Flag if user sending irrelevant, code or repeating messages
+    on_topic = agent.is_message_relevant(user_message, interview.get_session_info())
+    if not on_topic or interview.repeated_messages(user_message) or is_code(user_message):
         interview.flag_risk(user_message)
 
     # Terminate if the conversation has been flagged too often
@@ -76,9 +77,8 @@ def next_question(session_id:str, user_message:str) -> str:
         interview.update_session()
         return response | {'message':parameters['flagged_message']}
 
-    # Terminate if user message does not fit the interview context
-    if not agent.is_message_relevant(user_message, interview.get_session_info()):
-        interview.flag_risk(user_message)
+    # If user message does not fit the interview context, give another chance
+    if not on_topic:
         interview.update_session() 
         return response | {'message':parameters['off_topic_message']}
 
