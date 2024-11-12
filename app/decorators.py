@@ -86,7 +86,7 @@ def handle_500(f):
 		try:
 			response = f(*args, **kwargs)
 			response_log(
-				getattr(response, 'json', '<HTML>'), 
+				getattr(response, 'json', '<HTML>' if 'html' in str(response) else str(response)), 
 				getattr(response, 'status_code', 200), 
 				start_time
 			)

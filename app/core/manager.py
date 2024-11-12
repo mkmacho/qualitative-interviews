@@ -53,7 +53,7 @@ class InterviewManager(object):
 
     def get_session_info(self, key:str=None):
         """ Get data associated with current interview session (key). """
-        return self.data.get(key) or self.data
+        return self.data[key] if key else self.data
 
     def is_terminated(self) -> bool:
         """ If interview has been terminated. """

@@ -20,14 +20,13 @@ def cleaned(response, task:str):
     if len(sections) == 1:
         return sections[0].strip()
     elif len(sections) == 2:
-        logging.warning("Multiple sections!")
+        logging.warning(f"Multiple sections found: {output}")
         prompt = sections[0].lower()
-        if "question" in prompt or "message" in prompt:
+        if len(prompt.split()) <= 2 and ("question" in prompt or "message" in prompt):
             return sections[1].strip()
-        else:
-            raise ValueError("Received unknown GPT response")
     else:
-        raise ValueError("Received unknown GPT response")
+        logging.error(f"Received many sections: '{output}'")
+    return ':'.join(sections)
 
 def current_topic_history(chat:list) -> str:
     """ Convert messages from current topic into one string. """
