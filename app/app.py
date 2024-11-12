@@ -16,6 +16,8 @@ def index():
 def landing(interview_id:str, session_id:str):
 	""" Landing (start) page for interview_id session_id. """
 	response = logic.begin_interview_session(interview_id, session_id)
+	if response.get('in_progress_error'):
+		return 'Error: interview already in progress!'
 	return render_template('chat.html', data=response)
 
 @app.route('/next', methods=['POST'])
@@ -25,6 +27,8 @@ def next():
 	""" Internally called to continue interview. """
 	payload = request.get_json(force=True)
 	response = logic.next_question(**payload)
+	if response.get('not_started_error'):
+		return 'Oops, wrong page: interview has not begun!'
 	return jsonify(response)
 
 @app.route('/load/<session_id>', methods=['GET'])
@@ -41,6 +45,13 @@ def delete(session_id:str):
 	logic.delete_interview_session(session_id)
 	return make_response(f"Successfully deleted session '{session_id}'.")
 
+@app.route('/sessions', methods=['GET'])
+@decorators.handle_500
+def list_all():
+	""" Return all running interview sessions. """
+	sessions = logic.all_interview_sessions()
+	return jsonify(sessions)
+
 
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=8000, debug=True)
+	app.run(host="127.0.0.1", port=8000, debug=False)

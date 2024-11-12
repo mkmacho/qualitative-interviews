@@ -1,30 +1,24 @@
 import json
 import logging
 import os
-from redis import Redis
+from redis import Redis, ConnectionPool
 from redis.exceptions import ConnectionError
 
 
 class DatabaseManager(object):
     def __init__(self):
-        self.client = Redis(
+        pool = ConnectionPool(
             host=os.environ["REDIS_HOST"], 
             port=os.environ["REDIS_PORT"],
             password=os.environ["REDIS_PASSWORD"]
         )
-        self.test_connection()
-
-    def test_connection(self):
-        """ Test connection to backend.
-
-        Raises:
-            ConnectionError
-        """
         try:
-            self.client.keys()
-        except ConnectionError:
+            self.client = Redis(connection_pool=pool)
+            logging.info(f"Have open sessions: {self.client.keys()}")
+        except ConnectionError as e:
+            logging.error(f"RedisConnectionError: {str(e)}")
             raise ConnectionError("Database connection failed. Check credentials.")
-        logging.info("Redis connection established -- should happen only once!")
+        logging.info(f"Redis connection established. Should happen only once!")
 
     def load_remote_session(self, session_id:str) -> dict:
         """ Return interview session object. """
