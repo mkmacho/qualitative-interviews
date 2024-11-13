@@ -4,5 +4,4 @@
 *.pid
 *report*
 run.sh
-docker-compose.yml
 .dbdata

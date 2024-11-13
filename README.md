@@ -40,18 +40,15 @@ git clone https://github.com/mkmacho/qualitative-interviews.git
 cd qualitative-interviews
 ```
 
-Then build the image and run a container using the provided Dockerfile and the following code:
+Then build and run a container using the provided `Dockerfile` and the template `docker-compose` YAML, modified by replacing "YOUR_OPENAI_API_KEY" with your actual key.
 
 ```bash
-docker build -t qualitative-interviews .
-docker run -d \
-    -p "8000:80" \
-    -e OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>" \
-    -e DATABASE_URL="<YOUR_DB_URL>" \
-    --name=interviews qualitative-interviews
+docker-compose up --build --detach
 ```
 
-Now, you can make requests to your local host listening (by default, at least) port 8000, e.g. *http://0.0.0.0:8000/*.
+Just like that, you can now make requests to your local host listening (by default, at least) port 8000, e.g. *http://0.0.0.0:8000/*.
+
+Finally, note that you can stop and remove containers and networks in the compose file using ``docker-compose down``.
 
 
 ### Manually 
@@ -323,5 +320,6 @@ This file the HTML landing page users see and interact with. *Update the HTML or
     - Is bottleneck given machine/instance memory limit?
     - Can set (rule) number of child processes/workers?
     - Is our API (similarly OpenAI) parallel or concurrent?
+- Fix spare algorithm in `app.ini`
 
 
