@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 import time
 import logging 
+import os
 
 def is_code(message:str, threshold:int=5) -> bool:
     """ Check if the message contains code as proxied by certain symbols. """
@@ -43,7 +44,8 @@ def fill_prompt_with_interview_state(template:str, topics:list, interview_state:
     current_topic_idx = interview_state['current_topic_idx'] 
     next_topic_idx = min(current_topic_idx + 1, len(topics) - 1)
     history = current_topic_history(interview_state['chat'])
-    logging.info(f"Conversation history:\n{history}")
+    if os.getenv("APP_ENV", "DEV") == "DEV":
+        logging.info(f"Conversation history:\n{history}")
     prompt = template.format(
         topics='\n'.join([topic['topic'] for topic in topics]),
         question=interview_state["chat"][-1]["content"],
@@ -53,13 +55,16 @@ def fill_prompt_with_interview_state(template:str, topics:list, interview_state:
         next_interview_topic=topics[next_topic_idx]["topic"],
         current_topic_history=history
     )
-    logging.info(f"Prompt to GPT:\n{prompt}")
+    if os.getenv("APP_ENV", "DEV") == "DEV":
+        logging.info(f"Prompt to GPT:\n{prompt}")
     assert not re.findall(r"\{[^{}]+\}", prompt)
     return prompt 
 
 def execute_queries(query, task_args:dict) -> dict:
     """ 
     Execute queries (concurrently if multiple).
+    In current Python 3.13, default `max_workers` set to
+        min(32, (os.process_cpu_count() or 1) + 4)
 
     Args:
         query: function to execute

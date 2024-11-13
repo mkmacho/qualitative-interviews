@@ -22,7 +22,6 @@ def landing(interview_id:str, session_id:str):
 
 @app.route('/next', methods=['POST'])
 @decorators.handle_500
-@decorators.allowed_domains()
 def next():
 	""" Internally called to continue interview. """
 	payload = request.get_json(force=True)
@@ -54,4 +53,5 @@ def list_all():
 
 
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=8000, debug=False)
+	# Only for debugging while developing!
+	app.run(host="127.0.0.1", port=8000, debug=True)

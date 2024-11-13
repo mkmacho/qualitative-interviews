@@ -1,14 +1,15 @@
 FROM python:3.13-slim
 
+# Dependencies
 RUN apt-get update && apt-get install -y \
-	build-essential \
-	apt-utils \
 	nginx \
+	gcc \
 	postgresql \
-	postgresql-contrib \
 	supervisor && \
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
 
+# Config
 COPY config/nginx.conf /etc/nginx/sites-enabled/
 RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf && \
 	rm /etc/nginx/sites-enabled/default
@@ -16,10 +17,14 @@ RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf && \
 COPY config/app.ini /config/
 COPY /config/supervisor.conf /etc/supervisor/conf.d/
 
-COPY requirements.txt /config/
-RUN pip3 install -r /config/requirements.txt
-
+# Local app
+ENV PYTHONDONTWRITEBYTECODE 1
 COPY app /app
+COPY requirements.txt /config/
+RUN pip install --upgrade pip && \
+	pip install -r /config/requirements.txt
 
 EXPOSE 80
+
+# Start Supervisor, in turn start Nginx and uWSGI
 CMD ["supervisord", "-n"]
