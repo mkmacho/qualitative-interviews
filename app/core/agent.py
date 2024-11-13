@@ -1,18 +1,19 @@
-import os
 import logging
-from openai import OpenAI
+from openai import OpenAI, AuthenticationError
 from core.auxiliary import execute_queries, fill_prompt_with_interview_state
 
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-
 class Agent(object):
-    def __init__(self, api_key:str=OPENAI_API_KEY, timeout:int=20, max_retries:int=4):
-        self.client = OpenAI(
-            api_key=api_key, 
-            timeout=timeout, 
-            max_retries=max_retries
-        )
-        logging.info("OpenAI client instantiated -- should happen only once!")
+    def __init__(self, timeout:int=20, max_retries:int=3):
+        self.client = OpenAI(timeout=timeout, max_retries=max_retries)
+        try:
+            self.client.chat.completions.create(
+                messages=[{'role':'user', 'content':'test'}], 
+                model='gpt-4o-mini'
+            )
+        except AuthenticationError as e:
+            logging.error(f"OpenAI connection failed: {e}")
+            raise
+        logging.info("OpenAI client instantiated. Should happen only once!")
 
     def load_parameters(self, parameters:dict):
         self.parameters = parameters

@@ -22,9 +22,11 @@ Chopra, Felix and Haaland, Ingar, Conducting Qualitative Interviews with AI (202
 
 ## Usage
 
+This is a Flask web application in Python that run with [uWSGI and Nginx](https://flask.palletsprojects.com/en/stable/deploying/uwsgi/). We can install manually or run it in a single Docker container.
+
 ### Requirements
 
-The application has two main requirements: OpenAI keys and Redis backend integration. For OpenAI, you can obtain API keys [here](https://platform.openai.com/) which will be supplied as an environment variable `OPEN_AI_KEY`. For Redis, you can create a free tier account database [here](https://cloud.redis.io/#/databases) and set up the environment variables for `REDIS_HOST`, `REDIS_PASSWORD`, and `REDIS_PORT` accordingly.
+The application requires OpenAI API access. You can obtain API keys [here](https://platform.openai.com/). You will then need to supply your secret key as an environment variable in the `docker-compose` YML file as `OPEN_AI_KEY`. 
 
 
 ### Docker
@@ -45,13 +47,11 @@ docker build -t qualitative-interviews .
 docker run -d \
     -p "8000:80" \
     -e OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>" \
-    -e REDIS_HOST="<YOUR_REDIS_HOST_FOR_DATABASE>" \
-    -e REDIS_PASSWORD="<YOUR_REDIS_PASSWORD>" \
-    -e REDIS_PORT="<YOUR_REDIS_HOST_PORT>" \
+    -e DATABASE_URL="<YOUR_DB_URL>" \
     --name=interviews qualitative-interviews
 ```
 
-Now, you can make requests to your local *http://0.0.0.0:8000/* (listening on port 8000).
+Now, you can make requests to your local host listening (by default, at least) port 8000, e.g. *http://0.0.0.0:8000/*.
 
 
 ### Manually 
@@ -73,9 +73,7 @@ cd qualitative-interviews
 pip install -r requirements.txt
 
 export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-export REIDS_HOST="<YOUR_REDIS_HOST_FOR_DATABASE>"
-export REDIS_PASSWORD="<YOUR_REDIS_PASSWORD>"
-export REDIS_PORT="<YOUR_REDIS_HOST_PORT>" 
+export DATABASE_URL="<YOUR_DB_URL>"
 ```
 
 Finally, start serving the application by running:
@@ -84,7 +82,7 @@ Finally, start serving the application by running:
 python app/app.py
 ```
 
-Now, you can make requests to your local *http://0.0.0.0:8000/* (listening on port 8000).
+And again you can make requests to your local host at *http://0.0.0.0:8000/*.
 
 
 ### Customization
@@ -181,9 +179,9 @@ A sample of this template for *STOCK_MARKET_PARTICIPATION* interviews is display
 
 ## API
 
-The main API is to begin and host an interview. This is done by making a GET request with the interview `parameters_id` and the interview `session_id` in the URL. 
+The main API is to begin and host an interview. This is done by making a GET request with the interview `interview_id` and the interview `session_id` in the URL. 
 
-For example, given an interview parameter ID (e.g. `parameters_id == 'STOCK_MARKET'`) and the (unique) session ID of the interview (`session_id == 'TEST_SESSION'`), we can make a request to the host and port our application is serving on plus these keys, in this case just opening `http://0.0.0.0:8000/STOCK_MARKET/TEST_SESSION` on any browser. The web page will show you the beginning question of the interview, as specified in the parameters corresponding to the `parameters_id` you supplied, and prompt the user to answer this question. Each subsequent response by the user will be processed by the 'AI-interviewer' and the web page will dynamically update to show this ongoing chat. 
+For example, given an interview parameter ID (e.g. `interview_id == 'STOCK_MARKET'`) and the (unique) session ID of the interview (`session_id == 'TEST_SESSION'`), we can make a request to the host and port our application is serving on plus these keys, in this case just opening `http://0.0.0.0:8000/STOCK_MARKET/TEST_SESSION` on any browser. The web page will show you the beginning question of the interview, as specified in the parameters corresponding to the `parameters_id` you supplied, and prompt the user to answer this question. Each subsequent response by the user will be processed by the 'AI-interviewer' and the web page will dynamically update to show this ongoing chat. 
 
 Note that the dynamic updating is done in the back end through a `POST` request to the internal `/next` endpoint which, for a given session and user reply, determines the following message to be shown.
 
@@ -209,6 +207,7 @@ Example starting payload:
 {
     "user_message": "I can't afford it and the stock market is rigged.",
     "session_id": "TEST_SESSION",
+    "interview_id": "STOCK_MARKET"
 }
 ```
 
@@ -227,7 +226,8 @@ Example follow-up payload:
 ```
 {
     "user_message": "People like me never get ahead, only the super rich and big trading firms win.  I don't want to be swindled.",
-    "session_id": "TEST_SESSION"
+    "session_id": "TEST_SESSION",
+    "interview_id": "STOCK_MARKET"
 }
 ```
 
@@ -309,15 +309,8 @@ This file the HTML landing page users see and interact with. *Update the HTML or
 
 
 
-## TODO (Week of 05/11/2024)
+## TODO
 
-- **Basic UI**
-    - *Integrated existing javascript into HTML front-end*
-    - Further/final testing 06/11
-- Database
-    - *Does Redis interview store work well going forward?*
-    - Have parameter for set of (few) popular DBs (e.g. MongoDB)
-    - Table this for future...
 - **How to best deploy application?**
     - [Google](https://realpython.com/python-web-applications/)
     - AWS
