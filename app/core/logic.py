@@ -61,16 +61,16 @@ def next_question(session_id:str, user_message:str) -> str:
     Returns:
         response: (dict) containing `message` from interviewer
     """
+    logging.info(f"Generating next question for user message '{user_message}'")    
+    response = {'session_id':session_id}
 
     ##### LOAD INTERVIEW HISTORY OR INITIALIZE #####
     try:
         interview = InterviewManager(db, session_id).resume_session()
         parameters = interview.get_session_info('parameters')
     except (AssertionError, KeyError):
-        return {'not_started_error':True}
-
-    logging.info(f"Generating next question for user message '{user_message}'")    
-    response = {'session_id':session_id}
+        logging.critical(f"Attempted to continue non-existent session {session_id}")
+        return response | {'message':'interview_not_started_error'}
 
     # Load AI-interviewer agent 
     agent.load_parameters(parameters)

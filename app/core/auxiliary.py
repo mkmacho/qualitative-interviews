@@ -44,7 +44,7 @@ def fill_prompt_with_interview_state(template:str, topics:list, interview_state:
     current_topic_idx = interview_state['current_topic_idx'] 
     next_topic_idx = min(current_topic_idx + 1, len(topics) - 1)
     history = current_topic_history(interview_state['chat'])
-    if os.getenv("APP_ENV", "DEV") == "DEV":
+    if os.getenv("APP_ENV") == "DEV":
         logging.info(f"Conversation history:\n{history}")
     prompt = template.format(
         topics='\n'.join([topic['topic'] for topic in topics]),
@@ -55,7 +55,7 @@ def fill_prompt_with_interview_state(template:str, topics:list, interview_state:
         next_interview_topic=topics[next_topic_idx]["topic"],
         current_topic_history=history
     )
-    if os.getenv("APP_ENV", "DEV") == "DEV":
+    if os.getenv("APP_ENV") == "DEV":
         logging.info(f"Prompt to GPT:\n{prompt}")
     assert not re.findall(r"\{[^{}]+\}", prompt)
     return prompt 
