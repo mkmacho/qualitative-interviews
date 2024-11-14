@@ -5,3 +5,4 @@
 *report*
 run.sh
 .dbdata
+docker-compose-local.yml
