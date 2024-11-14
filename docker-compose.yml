@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     image: mcamacho10/qualitative-interviews:latest
@@ -7,19 +5,16 @@ services:
       db:
         condition: service_healthy
     container_name: app
-    ports:
-      - "8000:80"
-    links:
+    ports: 
+      - 8000:80
+    links: 
       - db
     build:
       context: .
       dockerfile: Dockerfile
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/chats
-      - APP_ENV=DEV
       - OPENAI_API_KEY=REPLACE_ME_WITH_YOUR_OPENAI_API_KEY
-    volumes:
-      - ./app:/app
   db:
     image: postgres:latest
     container_name: db
@@ -29,7 +24,7 @@ services:
       - POSTGRES_DB=chats
     hostname: localhost
     ports:
-      - "5432:5432"
+      - 5432:5432
     restart: always
     volumes:
       - .dbdata:/var/lib/postgresql/data

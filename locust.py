@@ -24,12 +24,14 @@ class Quickstart(HttpUser):
 		# Load session
 		r = self.client.get(f"/load/{session_id}")
 		if r.status_code != 200: 
+			print(f"ERROR: /load/{session_id} returned: {r.status_code}:{r.text}")
 			return
 
 		# Start session
 		if r.json() == {}:
 			r = self.client.get(f"/STOCK_MARKET/{session_id}")
 			if r.status_code != 200:
+				print(f"ERROR: /STOCK_MARKET/{session_id} returned: {r.status_code}:{r.text}")
 				return
 
 		# Continue session
@@ -38,9 +40,13 @@ class Quickstart(HttpUser):
 				"user_message": choice(sample_messages)
 			})
 		if r.status_code != 200:
+			print(f"ERROR: /next/{session_id} returned: {r.status_code}:{r.text}")
 			return 
 
 		message = r.json()['message'] 
 		if 'unusual input' in message or 'interview is over' in message:
 			# Delete session
-			self.client.get(f"/delete/{session_id}")
+			r = self.client.get(f"/delete/{session_id}")
+			if r.status_code != 200:
+				print(f"ERROR: /delete/{session_id} returned: {r.status_code}:{r.text}")
+

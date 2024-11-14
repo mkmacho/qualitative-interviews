@@ -25,32 +25,29 @@ def delete_interview_session(session_id:str):
     """ Delete existing interview saved to database. """
     db.delete_remote_session(session_id)
 
-def begin_interview_session(interview_id:str, session_id:str) -> str:
+def begin_interview_session(interview_id:str, session_id:str) -> dict:
     """ Begin new interview session.
 
     Returns:
-        response: (dict) containing starting question and IDs
+        response: (dict) containing starting question and session_id
     Raises:
         ValueError: (exception) if invalid parameters or session in progress
     """
     if not INTERVIEW_PARAMETERS.get(interview_id):
         raise ValueError("Invalid interview parameters specified!")
     parameters = INTERVIEW_PARAMETERS[interview_id]
+    response = {'session_id':session_id}
 
     # Check if interview has already been started
-    if db.load_remote_session(session_id): return {'in_progress_error': True}
+    if db.load_remote_session(session_id): 
+        return response | {'message':'interview_in_progress_error'}
 
     logging.info(f"Beginning interview '{interview_id}': session '{session_id}'")
     interview = InterviewManager(db, session_id).begin_session(parameters)
-    response = {
-        'message':INTERVIEW_PARAMETERS[interview_id]['first_question'], 
-        'interview_id':interview_id, 
-        'session_id':session_id
-    }
-    logging.info(f"Interview ID: {response}")
-    return response
+    logging.info(f"Start interview prompt: {parameters['first_question']}")
+    return response | {'message':parameters['first_question']}
 
-def next_question(session_id:str, user_message:str) -> str:
+def next_question(session_id:str, user_message:str) -> dict:
     """
     Process user message and generate response by the AI-interviewer.
 
