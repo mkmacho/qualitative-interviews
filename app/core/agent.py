@@ -17,7 +17,6 @@ class Agent(object):
 
     def load_parameters(self, parameters:dict):
         self.parameters = parameters
-        logging.info("Interview-specific agent instructions loaded.")
 
     def construct_query(self, tasks:list, interview_state:dict) -> dict:
         return {

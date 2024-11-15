@@ -68,7 +68,6 @@ class InterviewManager(object):
         """ Check if the conversation has been flagged too often. """
         if len(self.data['flagged_messages']) >= self.data['max_flags_allowed']:
             self.terminate("security_flags_exceeded")
-            logging.error("Flagged too often: quitting!")
             return True        
         return False
 
@@ -91,12 +90,11 @@ class InterviewManager(object):
     def terminate(self, reason:str="end_of_interview"):
         """ Record termination of interview. """
         self.data["terminated"] = True
-        logging.info(f"Terminating interview because: '{reason}'")
+        logging.warning(f"Terminating interview because: '{reason}'")
 
     def update_summary(self, summary:str):
         """ Update summary of prior interview. """
         self.data["summary"] = summary
-        logging.info("Successfully added summary to history.")
 
     def get_current_topic(self) -> int:
         """ Return topic index. """

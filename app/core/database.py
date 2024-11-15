@@ -45,7 +45,7 @@ class DatabaseManager(object):
         with connect(self.db_url) as conn:
             with conn.cursor() as cursor:
                 cursor.execute(delete_query, (session_id,))
-        logging.info(f"Session '{session_id}' deleted!")
+        logging.debug(f"Session '{session_id}' deleted!")
 
     def update_remote_session(self, session_id:str, data:dict):
         """ Update or insert session data in the database. """
@@ -56,4 +56,4 @@ class DatabaseManager(object):
         with connect(self.db_url) as conn:
             with conn.cursor() as cursor:
                 cursor.execute(upsert_query, (session_id, json.dumps(data)))
-        logging.info(f"Updated session '{session_id}'!")
+        logging.debug(f"Session '{session_id}' updated!")
