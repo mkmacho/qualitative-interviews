@@ -28,8 +28,8 @@ class InterviewManager(object):
         logging.info(f"Starting new session '{self.session_id}'")
         self.data = {
             'session_id': self.session_id,
-            'current_topic_idx': 0,
-            'current_question_idx': 0,
+            'current_topic_idx': 1,
+            'current_question_idx': 1,
             'current_finish_idx': 0,
             'chat': [],
             'flagged_messages': [],
@@ -58,6 +58,10 @@ class InterviewManager(object):
     def is_terminated(self) -> bool:
         """ If interview has been terminated. """
         return self.data['terminated']
+    
+    def is_moderated(self) -> bool:
+        """ If interview includes the moderator agent. """
+        return self.data['parameters']['moderate']
 
     def flag_risk(self, message:str):
         """ Flag possible security risk. """

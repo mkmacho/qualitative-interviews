@@ -37,8 +37,7 @@ def allowed_domains():
 			if not domain in WHITELISTED_DOMAINS:
 				return make_response(
 					jsonify({
-						"message":"Invalid domain: origin '{0}' is not allowed. " \
-						"Allowed domains are {1}".format(domain, WHITELISTED_DOMAINS),
+						"message":"Invalid domain: origin '{0}' is not allowed.",
 						"http_code":401
 					}), 401
 				)
