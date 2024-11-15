@@ -36,7 +36,6 @@ class InterviewManager(object):
             'terminated': False,  
             'summary': '',
             'outputs': [],
-            'max_flags_allowed': parameters.get('max_flags_allowed', 3),
             'parameters': parameters
         }
         # Add starting interview question to transcript
@@ -59,8 +58,8 @@ class InterviewManager(object):
         """ If interview has been terminated. """
         return self.data['terminated']
     
-    def is_moderated(self) -> bool:
-        """ If interview includes the moderator agent. """
+    def moderate_answer(self) -> bool:
+        """ If interview includes the moderator agent for answers. """
         return self.data['parameters']['moderate']
 
     def flag_risk(self, message:str):
@@ -70,7 +69,7 @@ class InterviewManager(object):
 
     def flagged_too_often(self) -> bool:
         """ Check if the conversation has been flagged too often. """
-        if len(self.data['flagged_messages']) >= self.data['max_flags_allowed']:
+        if len(self.data['flagged_messages']) >= self.data['parameters']['max_flags_allowed']:
             self.terminate("security_flags_exceeded")
             logging.error("Flagged too often: quitting!")
             return True        

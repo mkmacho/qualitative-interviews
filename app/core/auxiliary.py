@@ -69,7 +69,7 @@ def execute_queries(query, task_args:dict) -> dict:
     """
     st = time.time()
     suggestions = {}
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=len(task_args)) as executor:
         futures = {
             executor.submit(query, **kwargs): task 
                 for task, kwargs in task_args.items()
