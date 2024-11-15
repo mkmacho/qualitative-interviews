@@ -50,7 +50,7 @@ def fill_prompt_with_interview_state(template:str, topics:list, interview_state:
         next_interview_topic=topics[next_topic_idx - 1]["topic"],
         current_topic_history=current_topic_chat
     )
-    if os.getenv("APP_ENV", "DEV") == "DEV":
+    if os.getenv("APP_ENV") == "DEV":
         logging.info(f"Prompt to GPT:\n{prompt}")
     assert not re.findall(r"\{[^{}]+\}", prompt)
     return prompt 
