@@ -29,7 +29,7 @@ class DatabaseManager(object):
             raise
 
     def load_remote_session(self, session_id:str) -> dict:
-        """ Retrieve the session data from the database. """
+        """ Retrieve the interview session data from the database. """
         select_query = "SELECT data FROM sessions WHERE session_id = %s;"
         with connect(self.db_url) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:

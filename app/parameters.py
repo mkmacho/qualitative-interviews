@@ -12,7 +12,8 @@ INTERVIEW_PARAMETERS = {
 	"STOCK_MARKET": {
 		"_name": "STOCK_MARKET",
 		"_description": "Interview structure to investigate stock market participation (or lack thereof).",
-		"moderate": True,
+		"moderate_answers": True,
+		"moderate_questions": True,
 		"summarize": True,
 		"first_question": "I am interested in learning more about why you currently do not own any stocks or stock mutual funds. Can you help me understand the main factors or reasons why you are not participating in the stock market?",
 		"interview_plan": [

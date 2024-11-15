@@ -90,7 +90,8 @@ Currently, in `parameters.py` you will see one element in `INTERVIEW_PARAMETERS`
 
 Specifically, the parameters object must contain elements:
 
-* *moderate*: whether to active the moderation agent
+* *moderate_answers*: whether to active the moderation agent for incoming answers from the respondent
+* *moderate_questions*: whether to check outgoing questions with OpenAI's moderation endpoint
 * *summarize*: whether to active the summarization agent
 * *first_question*: the initial prompt that begins the interview
 * *interview_plan*: the list of topic dictionaries which include the `topic` as well as the `length`, indicating for how many questions to cover in this topic
@@ -113,7 +114,8 @@ A sample of this template for *STOCK_MARKET_PARTICIPATION* interviews is display
 
 ```
 {
-    "moderate": True,
+    "moderate_answers": True,
+    "moderate_questions": True,
     "summarize": True,
     "first_question": "I am interested in learning more about why you currently do not own any stocks or stock mutual funds. Can you help me understand the main factors or reasons why you are not participating in the stock market?",
     "interview_plan": [

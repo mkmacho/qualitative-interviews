@@ -75,10 +75,10 @@ def next_question(session_id:str, user_message:str) -> dict:
     if interview.is_terminated():
         return response | {'message':parameters['termination_message']}
 
-    # Optional: Flag if user sending irrelevant, code or repeating messages
-    if interview.is_moderated():
-        on_topic = agent.is_message_relevant(user_message, interview.get_session_info())
-        if not on_topic or interview.repeated_messages(user_message):
+    # Optional: Moderate interviewee responses, e.g. flagging off-topic or harmful messages
+    if interview.moderate_answer():
+        flagged = agent.review_answer(user_message, interview.get_session_info())
+        if not flagged or interview.repeated_messages(user_message):
             interview.flag_risk(user_message)
 
         # Terminate if the conversation has been flagged too often
@@ -87,15 +87,15 @@ def next_question(session_id:str, user_message:str) -> dict:
             return response | {'message':parameters['flagged_message']}
 
         # If user message does not fit the interview context, give another chance
-        if not on_topic:
+        if not flagged:
             interview.update_session() 
             return response | {'message':parameters['off_topic_message']}
 
 
-    """ UPDATE INTERVIEW WITH NEW USER MESSAGE
+    """
+    UPDATE INTERVIEW WITH NEW USER MESSAGE
     Note this happens *after* security checks such that
     flagged messages are *not* added to interview history.
-    --> MIGHT RE-THINK THIS LOGIC TO ADD TO HISTORY BUT IGNORE? 
     """
     interview.add_message(user_message, role="user")
 
@@ -144,5 +144,13 @@ def next_question(session_id:str, user_message:str) -> dict:
     logging.info(f"Interviewer produced output:\n{output}")
     interview.update_new_output(next_question, output)
     interview.update_session()
+
+    # Optional: Check if next question is flagged by OpenAI's moderation endpoint
+    if interview.moderate_question():
+        flagged_question = agent.review_question(next_question)
+        if flagged_question:
+            interview.terminate(reason="question_flagged")
+            interview.update_session()
+            return response | {'message':parameters['end_of_interview_message']}
     
     return response | {'message':next_question}
