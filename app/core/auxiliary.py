@@ -14,7 +14,7 @@ def is_code(message:str, threshold:int=5) -> bool:
 
 def cleaned(response, task:str):
     output = response.choices[0].message.content.strip("\n\" '''")
-    logging.info(f"GPT response: '{output}'")
+    logging.debug(f"GPT response: '{output}'")
     if task in ['summary']:
         return output
     sections = re.sub("[\n'''*]", "", output).split(':')
@@ -26,7 +26,7 @@ def cleaned(response, task:str):
         if len(prompt.split()) <= 2 and ("question" in prompt or "message" in prompt):
             return sections[1].strip()
     else:
-        logging.error(f"Received many sections: '{output}'")
+        logging.error(f"Received too many sections: '{output}'")
     return ':'.join(sections)
 
 def current_topic_history(chat:list) -> str:
@@ -44,8 +44,6 @@ def fill_prompt_with_interview_state(template:str, topics:list, interview_state:
     current_topic_idx = interview_state['current_topic_idx'] 
     next_topic_idx = min(current_topic_idx + 1, len(topics) - 1)
     history = current_topic_history(interview_state['chat'])
-    if os.getenv("APP_ENV") == "DEV":
-        logging.info(f"Conversation history:\n{history}")
     prompt = template.format(
         topics='\n'.join([topic['topic'] for topic in topics]),
         question=interview_state["chat"][-1]["content"],
@@ -55,8 +53,7 @@ def fill_prompt_with_interview_state(template:str, topics:list, interview_state:
         next_interview_topic=topics[next_topic_idx]["topic"],
         current_topic_history=history
     )
-    if os.getenv("APP_ENV") == "DEV":
-        logging.info(f"Prompt to GPT:\n{prompt}")
+    logging.debug(f"Prompt to GPT:\n{prompt}")
     assert not re.findall(r"\{[^{}]+\}", prompt)
     return prompt 
 
@@ -83,10 +80,8 @@ def execute_queries(query, task_args:dict) -> dict:
             task = futures[future]
             suggestions[task] = cleaned(future.result(), task)
 
-    logging.info("Query took {:.2f} seconds, returned: {}".format(
-        time.time() - st,
-        suggestions
-    ))
+    logging.info("OpenAI query took {:.2f} seconds".format(time.time() - st))
+    logging.debug(f"OpenAI query returned: {suggestions}")
     return suggestions
 
 

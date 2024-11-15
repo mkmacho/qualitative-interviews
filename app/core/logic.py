@@ -42,9 +42,10 @@ def begin_interview_session(interview_id:str, session_id:str) -> dict:
     if db.load_remote_session(session_id): 
         return response | {'message':'interview_in_progress_error'}
 
-    logging.info(f"Beginning interview '{interview_id}': session '{session_id}'")
     interview = InterviewManager(db, session_id).begin_session(parameters)
-    logging.info(f"Start interview prompt: {parameters['first_question']}")
+    logging.info("Beginning {} interview session '{}' with prompt '{}'".format(
+        interview_id, session_id, parameters['first_question']
+    ))
     return response | {'message':parameters['first_question']}
 
 def next_question(session_id:str, user_message:str) -> dict:
@@ -58,7 +59,9 @@ def next_question(session_id:str, user_message:str) -> dict:
     Returns:
         response: (dict) containing `message` from interviewer
     """
-    logging.info(f"Generating next question for user message '{user_message}'")    
+    logging.info("Generating next question for session '{}' user message '{}'".format(
+        session_id, user_message
+    ))    
     response = {'session_id':session_id}
 
     ##### LOAD INTERVIEW HISTORY OR INITIALIZE #####
@@ -106,13 +109,13 @@ def next_question(session_id:str, user_message:str) -> dict:
     num_topics = len(parameters['open_topics'])
     current_topic_idx = interview.get_current_topic()
     on_last_topic = current_topic_idx == num_topics - 1
-    logging.info(f"On topic {current_topic_idx+1}/{num_topics}...")
+    logging.debug(f"On topic {current_topic_idx+1}/{num_topics}...")
 
     # Current question within topic guide
     current_question_idx = interview.get_current_topic_question()
     num_questions = parameters['open_topics'][current_topic_idx]['length']
     on_last_question = current_question_idx == num_questions - 1
-    logging.info(f"On question {current_question_idx+1}/{num_questions}...")
+    logging.debug(f"On question {current_question_idx+1}/{num_questions}...")
 
     # Continue in workflow
     if on_last_topic and on_last_question:
@@ -141,7 +144,7 @@ def next_question(session_id:str, user_message:str) -> dict:
         next_question, output = agent.probe_within_topic(interview.get_session_info())
 
     # Update interview with new output
-    logging.info(f"Interviewer produced output:\n{output}")
+    logging.debug(f"Interviewer produced output:\n{output}")
     interview.update_new_output(next_question, output)
     interview.update_session()
     
