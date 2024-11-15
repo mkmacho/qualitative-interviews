@@ -1,9 +1,9 @@
 import logging
 from openai import OpenAI, AuthenticationError
-from core.auxiliary import execute_queries, fill_prompt_with_interview_state
+from core.auxiliary import execute_queries, fill_prompt_with_interview_state, convert_chat_to_strings
 
 class Agent(object):
-    def __init__(self, timeout:int=20, max_retries:int=3):
+    def __init__(self, timeout:int=30, max_retries:int=3):
         self.client = OpenAI(timeout=timeout, max_retries=max_retries)
         try:
             self.client.chat.completions.create(
@@ -26,7 +26,7 @@ class Agent(object):
                     "role":"user", 
                     "content": fill_prompt_with_interview_state(
                         self.parameters[task]['prompt'], 
-                        self.parameters['open_topics'],
+                        self.parameters['interview_plan'],
                         interview_state
                     )
                 }],
@@ -42,9 +42,9 @@ class Agent(object):
         assert interview_state["chat"][-1]["role"] == "assistant"
         response = execute_queries(
             self.client.chat.completions.create,
-            self.construct_query(['security'], interview_state)
+            self.construct_query(['moderator'], interview_state)
         )
-        return "yes" in response["security"].lower()
+        return "yes" in response["moderator"].lower()
         
     def probe_within_topic(self, interview_state:dict) -> (str, dict):
         response = execute_queries(
@@ -54,10 +54,14 @@ class Agent(object):
         return response['probe'], response
 
     def transition_topic(self, interview_state:dict) -> (str, dict):
+        summarize = interview_state['parameters']['summarize']
+        tasks = ['summary','transition'] if summarize else ['transition']
         response = execute_queries(
             self.client.chat.completions.create,
-            self.construct_query(['summary','transition'], interview_state)
+            self.construct_query(tasks, interview_state)
         )
+        if not summarize:
+            current_topic_idx = interview_state['current_topic_idx'] 
+            last_answer_current_topic_idx = int(2 * sum(topic['length'] for topic in topics[:current_topic_idx]))
+            response['summary'] = convert_chat_to_strings(interview_state['chat'][:last_answer_current_topic_idx])
         return response['transition'], response
-
-

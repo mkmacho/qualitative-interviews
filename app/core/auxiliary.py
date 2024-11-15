@@ -1,16 +1,8 @@
-from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 import time
 import logging 
 import os
-
-def is_code(message:str, threshold:int=5) -> bool:
-    """ Check if the message contains code as proxied by certain symbols. """
-    counts = Counter(message)
-    code_symbols = ["{", "}", "(", ")", "[", "]", ";", ":", "=", "<", ">", "+", "-", "*", "&", "|", "!", "^", "~", "@"]
-    code_count = sum(counts[symbol] for symbol in code_symbols)
-    return code_count > (threshold * (1 + len(message) / 100.0))
 
 def cleaned(response, task:str):
     output = response.choices[0].message.content.strip("\n\" '''")
@@ -29,8 +21,8 @@ def cleaned(response, task:str):
         logging.error(f"Received many sections: '{output}'")
     return ':'.join(sections)
 
-def current_topic_history(chat:list) -> str:
-    """ Convert messages from current topic into one string. """
+def convert_chat_to_strings(chat:list) -> str:
+    """ Convert messages from a chat into one string. """
     topic_history = ""
     for message in chat:
         if message["role"] == "assistant":
@@ -42,18 +34,21 @@ def current_topic_history(chat:list) -> str:
 def fill_prompt_with_interview_state(template:str, topics:list, interview_state:dict) -> str:
     """ Fill the prompt template with parameters from current interview. """
     current_topic_idx = interview_state['current_topic_idx'] 
-    next_topic_idx = min(current_topic_idx + 1, len(topics) - 1)
-    history = current_topic_history(interview_state['chat'])
+    next_topic_idx = min(current_topic_idx + 1, len(topics))
+    fist_question_in_current_topic_idx = 2 * sum(
+        topic['length'] for topic in topics[:current_topic_idx - 1])
+
+    current_topic_chat = convert_chat_to_strings(interview_state['chat'][int(fist_question_in_current_topic_idx):])
     if os.getenv("APP_ENV", "DEV") == "DEV":
-        logging.info(f"Conversation history:\n{history}")
+        logging.info(f"Current conversation history:\n{current_topic_chat}")
     prompt = template.format(
         topics='\n'.join([topic['topic'] for topic in topics]),
         question=interview_state["chat"][-1]["content"],
         answer=interview_state["user_message"],
         summary=interview_state['summary'],
-        current_topic=topics[current_topic_idx]["topic"],
-        next_interview_topic=topics[next_topic_idx]["topic"],
-        current_topic_history=history
+        current_topic=topics[current_topic_idx - 1]["topic"],
+        next_interview_topic=topics[next_topic_idx - 1]["topic"],
+        current_topic_history=current_topic_chat
     )
     if os.getenv("APP_ENV", "DEV") == "DEV":
         logging.info(f"Prompt to GPT:\n{prompt}")
@@ -88,6 +83,3 @@ def execute_queries(query, task_args:dict) -> dict:
         suggestions
     ))
     return suggestions
-
-
-

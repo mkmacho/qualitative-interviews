@@ -1,10 +1,10 @@
 import logging
 import json
-
+from parameters import PRODUCTION
 
 class Logger(object):
 	""" Logging wrapper for logging complex objects like request/response. """
-	def __init__(self, level=logging.INFO):
+	def __init__(self, level=logging.ERROR if PRODUCTION else logging.INFO):
 		handlers = [logging.StreamHandler()]
 		logging.basicConfig(
 			level=level,
