@@ -26,8 +26,6 @@ def next():
 	""" Internally called to continue interview. """
 	payload = request.get_json(force=True)
 	response = logic.next_question(**payload)
-	if response.get('not_started_error'):
-		return 'Oops, wrong page: interview has not begun!'
 	return jsonify(response)
 
 @app.route('/load/<session_id>', methods=['GET'])
@@ -43,13 +41,6 @@ def delete(session_id:str):
 	""" Delete remote database entry for interview session_id. """
 	logic.delete_interview_session(session_id)
 	return make_response(f"Successfully deleted session '{session_id}'.")
-
-@app.route('/sessions', methods=['GET'])
-@decorators.handle_500
-def list_all():
-	""" Return all running interview sessions. """
-	sessions = logic.all_interview_sessions()
-	return jsonify(sessions)
 
 
 if __name__ == "__main__":
