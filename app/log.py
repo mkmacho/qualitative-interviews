@@ -1,10 +1,15 @@
 import logging
 import json
+import os
 
+APP_ENV = os.getenv("APP_ENV", "PROD")
 
 class Logger(object):
-	""" Logging wrapper for logging complex objects like request/response. """
-	def __init__(self, level=logging.INFO):
+	""" 
+	Logging wrapper for logging complex objects like request/response. 
+	By default will log error-level messages.
+	"""
+	def __init__(self, level=logging.error if APP_ENV == "PROD" else logging.INFO):
 		handlers = [logging.StreamHandler()]
 		logging.basicConfig(
 			level=level,

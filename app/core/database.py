@@ -15,8 +15,7 @@ class DatabaseManager(object):
         self.db_url = os.environ["DATABASE_URL"]
         create_table_query = """
             CREATE TABLE IF NOT EXISTS sessions (
-                session_id VARCHAR PRIMARY KEY,
-                data JSONB
+                session_id VARCHAR PRIMARY KEY, data JSONB
             );
         """
         try:
@@ -29,7 +28,7 @@ class DatabaseManager(object):
             raise
 
     def load_remote_session(self, session_id:str) -> dict:
-        """ Retrieve the session data from the database. """
+        """ Retrieve the interview session data from the database. """
         select_query = "SELECT data FROM sessions WHERE session_id = %s;"
         with connect(self.db_url) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -45,7 +44,7 @@ class DatabaseManager(object):
         with connect(self.db_url) as conn:
             with conn.cursor() as cursor:
                 cursor.execute(delete_query, (session_id,))
-        logging.debug(f"Session '{session_id}' deleted!")
+        logging.info(f"Session '{session_id}' deleted!")
 
     def update_remote_session(self, session_id:str, data:dict):
         """ Update or insert session data in the database. """
@@ -56,4 +55,4 @@ class DatabaseManager(object):
         with connect(self.db_url) as conn:
             with conn.cursor() as cursor:
                 cursor.execute(upsert_query, (session_id, json.dumps(data)))
-        logging.debug(f"Session '{session_id}' updated!")
+        logging.info(f"Session '{session_id}' updated!")

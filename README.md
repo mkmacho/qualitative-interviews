@@ -90,8 +90,11 @@ Currently, in `parameters.py` you will see one element in `INTERVIEW_PARAMETERS`
 
 Specifically, the parameters object must contain elements:
 
+* *moderate_answers*: whether to active the moderation agent for incoming answers from the respondent
+* *moderate_questions*: whether to check outgoing questions with OpenAI's moderation endpoint
+* *summarize*: whether to active the summarization agent
 * *first_question*: the initial prompt that begins the interview
-* *open_topics*: the list of topic dictionaries which include the `topic` as well as the `length`, indicating for how many questions to cover this topic
+* *interview_plan*: the list of topic dictionaries which include the `topic` as well as the `length`, indicating for how many questions to cover in this topic
 * *closing_questions*: the (fixed) list of questions/comments (if any) with which to end the interview
 * *end_of_interview_message*: the message to display at the end of the interview
 * *termination_message*: the message to display in the event the user responds to an ended interview
@@ -103,16 +106,19 @@ As well as elements defining the LLM-interactions:
 * *summary*: if/how you would like the AI-interviewer to summarize the interview thus far
 * *transition*: if/how you would like the AI-interviewer to transition topics 
 * *probe*: if/how you would like the AI-interviewer to probe topics
-* *security*: if/how you would like the AI-interviewer to ascertain user message relevance
+* *moderator*: if/how you would like the AI-interviewer to ascertain user message relevance
 
-All of which define a `prompt` for the AI-interviewer, a maximum length (`max_tokens`) for the desired response, a `temperature` for the variability of the response, and a `model` for the LLM to use. Note that the prompt may reference the current state of the interview or the defined interview structure through the use of curly bracket variables (e.g. `{topics}` will be populated by the defined `open_topics`).
+All of which define a `prompt` for the AI-interviewer, a maximum length (`max_tokens`) for the desired response, a `temperature` for the variability of the response, and a `model` for the LLM to use. Note that the prompt may reference the current state of the interview or the defined interview structure through the use of curly bracket variables (e.g. `{topics}` will be populated by the defined `interview_plan`).
 
 A sample of this template for *STOCK_MARKET_PARTICIPATION* interviews is displayed here:
 
 ```
 {
+    "moderate_answers": True,
+    "moderate_questions": True,
+    "summarize": True,
     "first_question": "I am interested in learning more about why you currently do not own any stocks or stock mutual funds. Can you help me understand the main factors or reasons why you are not participating in the stock market?",
-    "open_topics": [
+    "interview_plan": [
         {
             "topic":"Explore the reasons behind the interviewee's choice to avoid the stock market.",
             "length":6
@@ -167,7 +173,7 @@ A sample of this template for *STOCK_MARKET_PARTICIPATION* interviews is display
     "probe": {
         "prompt": "...",
     },
-    "security": {
+    "moderator": {
         "prompt": "...",
     }
 }

@@ -63,13 +63,40 @@ function appendChatbotMessage(message, chatArea, status) {
 	chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-// Add the initial question to the chat area from Flask message
 var chatArea = document.getElementById("chat_area");
-appendChatbotMessage("{{ data['message'] }}", chatArea, "response");
-
-// Event listener for the "submit" button
 var submitButton = document.getElementById("submit_button");
 var inputField = document.getElementById("user_message")
+
+// Add the initial question to the chat area from Flask message
+var firstQuestion = "{{ data['message'] }}"
+if (firstQuestion == "interview_in_progress_error") {
+	submitButton.disabled = true;
+	submitButton.style.backgroundColor = '#ccc';
+	firstQuestion = "This interview session is already in progress. Please exit."
+}
+appendChatbotMessage(firstQuestion, chatArea, "response");
+
+// Prevent pasting into the chat area
+chatArea.addEventListener("paste", function (event) {
+    event.preventDefault();
+});
+
+// Prevent copying content from the chat area
+chatArea.addEventListener("copy", function (event) {
+    event.preventDefault();
+});
+
+// Disable pasting into the input field 
+inputField.addEventListener("paste", function (event) {
+    event.preventDefault();
+});
+
+// Disable copying from the input field
+inputField.addEventListener("copy", function (event) {
+    event.preventDefault();
+});
+
+// Event listener for the "submit" button
 submitButton.addEventListener("click", function () {
 	// Get the user response.
 	var userMessage = inputField.value.trim();

@@ -18,7 +18,8 @@ class InterviewManager(object):
     
     def begin_session(self, parameters:dict):
         """
-        Loads interview data and variables into session. 
+        Loads interview data and variables into session.
+        Note indices are 1-indexed. 
 
         Args:
             parameters: (dict) interview guidelines
@@ -28,19 +29,17 @@ class InterviewManager(object):
         logging.info(f"Starting new session '{self.session_id}'")
         self.data = {
             'session_id': self.session_id,
-            'current_topic_idx': 0,
-            'current_question_idx': 0,
-            'current_finish_idx': 0,
+            'current_topic_idx': 1,
+            'current_question_idx': 1,
+            'current_finish_idx': 1,
             'chat': [],
             'flagged_messages': [],
             'terminated': False,  
             'summary': '',
-            'outputs': [],
-            'max_flags_allowed': parameters.get('max_flags_allowed', 3),
             'parameters': parameters
         }
         # Add starting interview question to transcript
-        self.add_message(parameters['first_question'], role='assistant')
+        self.add_message(parameters['first_question'], role="assistant")
         self.update_session()
         return self
 
@@ -61,22 +60,27 @@ class InterviewManager(object):
 
     def flag_risk(self, message:str):
         """ Flag possible security risk. """
-        self.data["flagged_messages"].append((message, int(time.time())))
         logging.warning("Flagging message for possible risk...")
+        flagged = [int(time.time())]
+        if self.data['parameters'].get('store_flagged_messages'):
+            flagged.append(message)
+        self.data["flagged_messages"].append(flagged)
 
     def flagged_too_often(self) -> bool:
         """ Check if the conversation has been flagged too often. """
-        if len(self.data['flagged_messages']) >= self.data['max_flags_allowed']:
+        if len(self.data['flagged_messages']) >= self.data['parameters'].get('max_flags_allowed', 3):
             self.terminate("security_flags_exceeded")
             return True        
         return False
 
-    def add_message(self, message:str, role:str):
+    def add_message(self, message:str, role:str="user"):
         """ Add to chat history. """
-        assert role in ["user", "assistant", "system"]
+        assert role in ["user", "assistant"]
         self.data['chat'].append({
             'role':role, 
             'content':message,
+            'topic_idx':self.data['current_topic_idx'],
+            'question_idx':self.data['current_question_idx'],
             'time':int(time.time())
         })
 
@@ -104,30 +108,25 @@ class InterviewManager(object):
         """ Return question index within topic. """
         return self.data["current_question_idx"]
 
-    def _update_counters(self, output:dict):
-        """ Update the topic and question counters in interview based
-            on action (e.g. transition, probe, or finish) we just took.
-        """
-        if output.get("transition"):
-            # Having just transitioned topic...
-            self.data["current_question_idx"] = 1   # reset question counter
-            self.data["current_topic_idx"] += 1     # increment topic counter
-        elif output.get("probe"):
-            # Having just probed within topic... 
-            self.data["current_question_idx"] += 1  # only increment question
-        else:
-            assert output.get("finish")
-            self.data["current_finish_idx"] += 1    # increment final questions
+    def update_final_questions(self):
+        """ Increment counter of which 'final' question we are on. """
+        self.data["current_finish_idx"] += 1
 
-    def update_new_output(self, next_question:str, output:dict):
-        """ Update all interview variables before closing application. """
-        output.update({
-            "topic_idx": self.data['current_topic_idx'],
-            "question_idx": self.data['current_question_idx']
-        })
-        self.data["outputs"] += [output]
-        self.add_message(next_question, "assistant")
-        self._update_counters(output)
+    def update_transition(self, summary:str):
+        """ 
+        Having transitioned, update topic counter (and reset question). 
+        
+        If summary agent is provided, also update interview summary of 
+        prior topics covered for future context.
+        """
+        self.data["current_question_idx"] = 1  
+        self.data["current_topic_idx"] += 1
+        if self.data['parameters'].get('summary'):
+            self.update_summary(summary)
+
+    def update_probe(self):
+        """ Having probed within topic, simply increment question counter. """ 
+        self.data["current_question_idx"] += 1  
 
     def update_session(self):
         """ Update session in remote database """ 

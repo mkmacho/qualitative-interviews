@@ -2,7 +2,6 @@ import logging
 from core.agent import Agent
 from core.database import DatabaseManager
 from core.manager import InterviewManager
-from core.auxiliary import is_code
 from parameters import INTERVIEW_PARAMETERS
 
 agent = Agent()
@@ -79,43 +78,43 @@ def next_question(session_id:str, user_message:str) -> dict:
     if interview.is_terminated():
         return response | {'message':parameters['termination_message']}
 
-    # Flag if user sending irrelevant, code or repeating messages
-    on_topic = agent.is_message_relevant(user_message, interview.get_session_info())
-    if not on_topic or interview.repeated_messages(user_message) or is_code(user_message):
-        interview.flag_risk(user_message)
+    # Optional: Moderate interviewee responses, e.g. flagging off-topic or harmful messages
+    if parameters.get('moderate_answers') and parameters.get('moderator'):
+        flagged = agent.review_answer(user_message, interview.get_session_info())
+        if not flagged or interview.repeated_messages(user_message):
+            interview.flag_risk(user_message)
 
-    # Terminate if the conversation has been flagged too often
-    if interview.flagged_too_often():
-        interview.update_session()
-        return response | {'message':parameters['flagged_message']}
+        # Terminate if the conversation has been flagged too often
+        if interview.flagged_too_often():
+            interview.update_session()
+            return response | {'message':parameters['flagged_message']}
 
-    # If user message does not fit the interview context, give another chance
-    if not on_topic:
-        interview.update_session() 
-        return response | {'message':parameters['off_topic_message']}
+        # If user message does not fit the interview context, give another chance
+        if not flagged:
+            interview.update_session() 
+            return response | {'message':parameters['off_topic_message']}
 
-
-    """ UPDATE INTERVIEW WITH NEW USER MESSAGE
+    """
+    UPDATE INTERVIEW WITH NEW USER MESSAGE
     Note this happens *after* security checks such that
     flagged messages are *not* added to interview history.
-    --> MIGHT RE-THINK THIS LOGIC TO ADD TO HISTORY BUT IGNORE? 
     """
-    interview.add_message(user_message, role="user")
+    interview.add_message(user_message)
 
 
     ##### CONTINUE INTERVIEW BASED ON WORKFLOW #####
 
     # Current topic guide
-    num_topics = len(parameters['open_topics'])
+    num_topics = len(parameters['interview_plan'])
     current_topic_idx = interview.get_current_topic()
-    on_last_topic = current_topic_idx == num_topics - 1
+    on_last_topic = current_topic_idx == num_topics
     logging.debug(f"On topic {current_topic_idx+1}/{num_topics}...")
 
     # Current question within topic guide
     current_question_idx = interview.get_current_topic_question()
-    num_questions = parameters['open_topics'][current_topic_idx]['length']
-    on_last_question = current_question_idx == num_questions - 1
-    logging.debug(f"On question {current_question_idx+1}/{num_questions}...")
+    num_questions = parameters['interview_plan'][current_topic_idx-1]['length']
+    on_last_question = current_question_idx == num_questions
+    logging.debug(f"On question {current_question_idx}/{num_questions}...")
 
     # Continue in workflow
     if on_last_topic and on_last_question:
@@ -124,31 +123,36 @@ def next_question(session_id:str, user_message:str) -> dict:
         
         # Exit condition: have already produced last "final" question
         current_finish_idx = interview.get_session_info("current_finish_idx")
-        if current_finish_idx == len(last_questions):
+        if current_finish_idx > len(last_questions):
             interview.terminate()
             interview.update_session()
             return response | {'message':parameters['end_of_interview_message']}
 
         # Otherwise, get next "final" interviewer question
-        next_question = last_questions[current_finish_idx]
-        output = {"finish": {"message": next_question}}
+        next_question = last_questions[current_finish_idx - 1]
+        interview.update_final_questions()
 
     elif on_last_question:
         # Transition to *next* topic...
-        next_question, output = agent.transition_topic(interview.get_session_info())
-        # Also update running summary of prior topics covered
-        interview.update_summary(output['summary'])
+        next_question, summary = agent.transition_topic(interview.get_session_info())
+        interview.update_transition(summary)
 
     else:
         # Proceed *within* topic...
-        next_question, output = agent.probe_within_topic(interview.get_session_info())
+        next_question = agent.probe_within_topic(interview.get_session_info())
+        interview.update_probe()
 
     # Update interview with new output
-    logging.debug(f"Interviewer produced output:\n{output}")
-    interview.update_new_output(next_question, output)
+    logging.info(f"Interviewer responded: '{next_question}'")
+    interview.add_message(next_question, role="assistant")
     interview.update_session()
+
+    # Optional: Check if next question is flagged by OpenAI's moderation endpoint
+    if parameters.get('moderate_questions'):
+        flagged_question = agent.review_question(next_question)
+        if flagged_question:
+            interview.terminate(reason="question_flagged")
+            interview.update_session()
+            return response | {'message':parameters['end_of_interview_message']}
     
     return response | {'message':next_question}
-
-
-
