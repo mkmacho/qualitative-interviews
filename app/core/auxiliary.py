@@ -39,8 +39,9 @@ def fill_prompt_with_interview_state(template:str, topics:list, interview_state:
         topic['length'] for topic in topics[:current_topic_idx - 1])
 
     current_topic_chat = convert_chat_to_strings(interview_state['chat'][int(fist_question_in_current_topic_idx):])
-    if os.getenv("APP_ENV", "DEV") == "DEV":
+    if os.getenv("APP_ENV") == "DEV":
         logging.info(f"Current conversation history:\n{current_topic_chat}")
+
     prompt = template.format(
         topics='\n'.join([topic['topic'] for topic in topics]),
         question=interview_state["chat"][-1]["content"],
