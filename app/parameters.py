@@ -10,8 +10,11 @@ INTERVIEW_PARAMETERS = {
 	"STOCK_MARKET": {
 		"_name": "STOCK_MARKET",
 		"_description": "Interview structure to investigate stock market participation (or lack thereof).",
+		"moderate_answers": True,
+		"moderate_questions": True,
+		"summarize": True,
 		"first_question": "I am interested in learning more about why you currently do not own any stocks or stock mutual funds. Can you help me understand the main factors or reasons why you are not participating in the stock market?",
-		"open_topics": [
+		"interview_plan": [
 			{
 				"topic":"Explore the reasons behind the interviewee's choice to avoid the stock market.",
 				"length":6
@@ -34,6 +37,7 @@ INTERVIEW_PARAMETERS = {
 			"Reflecting on our conversation, what would you identify as the main reason you're not participating in the stock market?"
 		],
 		"max_flags_allowed": 3,
+		"store_flagged_messages": True,
 		"termination_message": "The interview is over. Please proceed to the next page.---END---",
 		"flagged_message": "Please note, too many of your messages have been identified as unusual input. Please proceed to the next page.---END---",
 		"off_topic_message": "I might have misunderstood your response, but it seems you might be trying to steer the interview off topic or that you have provided me with too little context. Can you please try to answer the question again in a different way, preferably with more detail, or say so directly if you prefer not to answer the question?",
@@ -131,7 +135,7 @@ INTERVIEW_PARAMETERS = {
 			"model": "gpt-4o",
 			"max_tokens": 300
 		},
-		"security": {
+		"moderator": {
 			"prompt": """
 				You are monitoring a conversation that is part of an in-depth interview. The interviewer asks questions and the interviewee replies. The interview should stay on topic. The interviewee should try to respond to the question of the interviewer (but it is not important to answer all questions that are asked), express a wish to move on, or decline to respond. The interviewee is also allowed to say that they don't know, do not understand the question, or express uncertainty. Responses can be very short, as long as they have some connection with the question. The interviewee's response might contain spelling and grammar mistakes. Here is the last part of the conversation.
 

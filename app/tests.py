@@ -21,7 +21,6 @@ class APITestCase(unittest.TestCase):
 			r = client.get('/STOCK_MARKET/TEST_SESSION')
 			self.assertEqual(r.status_code, 200)
 			response = client.post('/next', 
-				headers={"origin": "http://0.0.0.0:8000"},
 				data=json.dumps({
 					"user_message": "I can't afford it and the stock market is rigged.",
 					"session_id": "TEST_SESSION"

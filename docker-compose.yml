@@ -13,7 +13,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/chats
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/interviews
       - OPENAI_API_KEY=REPLACE_ME_WITH_YOUR_OPENAI_API_KEY
   db:
     image: postgres:latest
@@ -21,7 +21,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=chats
+      - POSTGRES_DB=interviews
     hostname: localhost
     ports:
       - 5432:5432
