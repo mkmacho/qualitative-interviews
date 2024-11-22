@@ -9,7 +9,7 @@ class Logger(object):
 	Logging wrapper for logging complex objects like request/response. 
 	By default will log error-level messages.
 	"""
-	def __init__(self, level=logging.error if APP_ENV == "PROD" else logging.INFO):
+	def __init__(self, level=logging.ERROR if APP_ENV == "PROD" else logging.INFO):
 		handlers = [logging.StreamHandler()]
 		logging.basicConfig(
 			level=level,
