@@ -328,4 +328,7 @@ This file the HTML landing page users see and interact with. *Update the HTML or
     - Is our API (similarly OpenAI) parallel or concurrent?
 - Fix spare algorithm in `app.ini`
 
+### NOTES:
+- For PostgreSQL
+    - Change `/opt/homebrew/var/postgresql\@15/pg_hba.conf` and `/postgresql.conf` to accept local incoming connections if building/testing locally, then `brew services restart postgresql@15`
 
