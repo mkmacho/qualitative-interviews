@@ -4,16 +4,16 @@ from time import sleep
 from json.decoder import JSONDecodeError
 
 sample_messages = [
-	"I dont like stocks",
-	"The game is rigged",
-	"Stop the itnerview",
-	"Not enough money to lose. Why would I? And why do you want to know anyway?",
-	"No one gets ahead",
-	"I am sleepy",
-	"Do you?",
-	"We've already tried that before",
-	"THere's no point, we'd just lose money",
-	"I do own a few actually"
+	"I dont like stocks nor do I trust them",
+	"The game is rigged, only the big funds profit while the rest of us will inevitable lose",
+	"They have all the access, all the hardware to trade quickly, and all the inside information",
+	"In any case, I don't have enough money to lose. If the market swings and I lose what I have I won't be able to afford necessities",
+	"I'd rather have safe funds saved away for rainy days",
+	"My uncle Joe lost pretty much everything he had during the financial crash of '08. We learned our lesson then",
+	"It's not even risk aversion, I am simply not interested in playing a losing game",
+	"The costs of trading at our budget are too high",
+	"If there were easier, more accessible tools to begin investing I think that would help",
+	"In the future given more disposable, discretionary income I would like to put some money into the stock market"
 ]
 
 class Quickstart(HttpUser):
