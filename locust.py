@@ -58,3 +58,6 @@ class Quickstart(HttpUser):
 			if r.status_code != 200:
 				print(f"ERROR {r.status_code}: /delete/{session_id} returned: {r.text}")
 
+
+### Run using e.g. ###
+# locust -f locust.py --host=0.0.0.0:8000 --users=64 --spawn-rate=4 --html=report.html --run-time=240s
