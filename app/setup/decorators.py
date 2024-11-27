@@ -84,16 +84,11 @@ def handle_500(f):
 		start_time = time.time()
 		try:
 			response = f(*args, **kwargs)
-			response_log(
-				getattr(response, 'json') if request.endpoint == 'next' else request.endpoint, 
-				getattr(response, 'status_code', 200), 
-				start_time
-			)
 		except Exception as e:
 			http_code = getattr(e, "http_code", None) or getattr(e, "code", 500)
 			message = str(e) or getattr(e, "message", "Service failed")
 			meta = {"type":type(e).__name__,"tb":tb.format_exc(),"str":message}
-			response_log(meta, http_code, start_time, key="error")
+			# response_log(meta, http_code, start_time, key="error")
 			response = make_response(jsonify(meta), http_code)
 		return response
 	return decorated

@@ -23,6 +23,7 @@ class APITestCase(unittest.TestCase):
 			response = client.post('/next', 
 				data=json.dumps({
 					"user_message": "I can't afford it and the stock market is rigged.",
+					"interview_id": "STOCK_MARKET",
 					"session_id": "TEST_SESSION"
 				}), 
 				content_type='application/json'

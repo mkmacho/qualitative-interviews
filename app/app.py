@@ -1,5 +1,10 @@
-from flask import Flask, request
-from flask import jsonify, render_template, make_response
+from flask import (
+	Flask, 
+	request,
+	jsonify, 
+	render_template, 
+	make_response
+)
 from setup import decorators
 from core import logic
 
@@ -15,9 +20,7 @@ def index():
 @decorators.handle_500
 def landing(interview_id:str, session_id:str):
 	""" Landing (start) page for interview_id session_id. """
-	response = logic.begin_interview_session(interview_id, session_id)
-	if response.get('in_progress_error'):
-		return 'Error: interview already in progress!'
+	response = logic.begin_interview_session(session_id, interview_id)
 	return render_template('chat.html', data=response)
 
 @app.route('/next', methods=['POST'])

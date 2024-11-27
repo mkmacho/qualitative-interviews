@@ -1,18 +1,17 @@
 import json 
 import logging 
-import os
 from psycopg2 import connect, OperationalError
 from psycopg2.extras import RealDictCursor 
 
 
-class DatabaseManager(object):
-    def __init__(self) :
+class postgres(object):
+    def __init__(self, db_url:str) :
         """ 
         Initialize the PostgreSQL database connection and table.
-        Note: we are using the environment variable URL in format
+        Note: we are using the URL in format
             "postgresql://username:password@host:port/database"
         """
-        self.db_url = os.environ["DATABASE_URL"]
+        self.db_url = db_url
         create_table_query = """
             CREATE TABLE IF NOT EXISTS sessions (
                 session_id VARCHAR PRIMARY KEY, data JSONB
@@ -25,7 +24,7 @@ class DatabaseManager(object):
             logging.info("PostgreSQL connection established. Should happen only once!")
         except OperationalError as e:
             logging.error(f"Database connection failed: {e}")
-            raise
+            raise e
 
     def load_remote_session(self, session_id:str) -> dict:
         """ Retrieve the interview session data from the database. """
