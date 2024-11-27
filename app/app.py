@@ -1,6 +1,6 @@
 from flask import Flask, request
 from flask import jsonify, render_template, make_response
-import decorators
+from setup import decorators
 from core import logic
 
 app = Flask(__name__)

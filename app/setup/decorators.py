@@ -4,8 +4,8 @@ from flask import make_response, jsonify, request
 import time
 import traceback as tb
 from jsonschema import validate 
-from schema_validators import API_SCHEMAS
-from log import Logger
+from setup.schema_validators import API_SCHEMAS
+from setup.log import Logger
 from parameters import WHITELISTED_DOMAINS
 
 # Specialized logging logger
