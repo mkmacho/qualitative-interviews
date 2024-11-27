@@ -1,4 +1,4 @@
-import time
+from datetime import datetime
 import logging
 
 
@@ -14,7 +14,6 @@ class InterviewManager(object):
     def __init__(self, client, session_id:str):
         self.client = client
         self.session_id = session_id
-        self.data = {}
     
     def begin_session(self, parameters:dict):
         """
@@ -24,8 +23,6 @@ class InterviewManager(object):
         Args:
             parameters: (dict) interview guidelines
         """
-        assert not self.data
-        assert not self.client.load_remote_session(self.session_id)
         logging.info(f"Starting new session '{self.session_id}'")
         self.data = {
             'session_id': self.session_id,
@@ -41,14 +38,12 @@ class InterviewManager(object):
         # Add starting interview question to transcript
         self.add_message(parameters['first_question'], role="assistant")
         self.update_session()
-        return self
 
     def resume_session(self):
         """ Load (remote) data into current Interview object. """
         self.data = self.client.load_remote_session(self.session_id)
-        assert self.data 
+        assert self.data.get('session_id') == self.session_id
         logging.info(f"Resumed existing interview session '{self.session_id}'")
-        return self
 
     def get_session_info(self, key:str=None):
         """ Get data associated with current interview session (key). """
@@ -61,7 +56,7 @@ class InterviewManager(object):
     def flag_risk(self, message:str):
         """ Flag possible security risk. """
         logging.warning("Flagging message for possible risk...")
-        flagged = [int(time.time())]
+        flagged = [str(datetime.now())]
         if self.data['parameters'].get('store_flagged_messages'):
             flagged.append(message)
         self.data["flagged_messages"].append(flagged)
@@ -81,7 +76,7 @@ class InterviewManager(object):
             'content':message,
             'topic_idx':self.data['current_topic_idx'],
             'question_idx':self.data['current_question_idx'],
-            'time':int(time.time())
+            'time':str(datetime.now())
         })
 
     def repeated_messages(self, message:str, min_length:int=5) -> bool:
@@ -102,15 +97,25 @@ class InterviewManager(object):
 
     def get_current_topic(self) -> int:
         """ Return topic index. """
-        return self.data["current_topic_idx"]
+        assert self.data["current_topic_idx"] == int(self.data["current_topic_idx"]) # Delete
+        return int(self.data["current_topic_idx"])
 
     def get_current_topic_question(self) -> int:
         """ Return question index within topic. """
-        return self.data["current_question_idx"]
+        assert self.data["current_question_idx"] == int(self.data["current_question_idx"]) # Delete
+        return int(self.data["current_question_idx"])
 
-    def update_final_questions(self):
-        """ Increment counter of which 'final' question we are on. """
-        self.data["current_finish_idx"] += 1
+    def get_final_question(self) -> str:
+        """ Get next "final" (i.e. closing) interviewer question/comment. """
+        final_questions = self.data['parameters'].get('closing_questions', [])
+        try:
+            out = final_questions[int(self.data["current_finish_idx"]) - 1]
+        except IndexError:
+            out = ""
+        else:
+            # Increment counter of which 'final' question we are on
+            self.data["current_finish_idx"] += 1
+        return out
 
     def update_transition(self, summary:str):
         """ 

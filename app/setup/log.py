@@ -2,17 +2,16 @@ import logging
 import json
 import os
 
-APP_ENV = os.getenv("APP_ENV", "PROD")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "ERROR")
 
 class Logger(object):
 	""" 
 	Logging wrapper for logging complex objects like request/response. 
-	By default will log error-level messages.
+	By default will log 'warning'-level messages.
 	"""
-	def __init__(self, level=logging.ERROR if APP_ENV == "PROD" else logging.INFO):
-		handlers = [logging.StreamHandler()]
+	def __init__(self):
 		logging.basicConfig(
-			level=level,
+			level=getattr(logging, LOG_LEVEL),
 			format="%(asctime)s %(name)-20s %(levelname)-8s %(message)s",
 			encoding='utf-8',
 			handlers=[logging.StreamHandler(), logging.FileHandler('/tmp/app.log')]

@@ -2,10 +2,8 @@ import logging
 from openai import OpenAI, AuthenticationError
 from core.auxiliary import execute_queries, fill_prompt_with_interview_state, chat_to_string
 
-
 class Agent(object):
     """ Class to manage LLM-based agents. """
-
     def __init__(self, timeout:int=30, max_retries:int=3):
         self.client = OpenAI(timeout=timeout, max_retries=max_retries)
         try:
@@ -15,31 +13,29 @@ class Agent(object):
             )
         except AuthenticationError as e:
             logging.error(f"OpenAI connection failed: {e}")
-            raise
+            raise e
         logging.info("OpenAI client instantiated. Should happen only once!")
-
-    def load_parameters(self, parameters:dict):
-        self.parameters = parameters
 
     def construct_query(self, tasks:list, interview_state:dict) -> dict:
         """ 
         Construct OpenAI API completions query, 
-        defaults to `gpt-4o-mini` model and temperature of 0. 
+        defaults to `gpt-4o-mini` model, 300 token answer limit, and temperature of 0. 
         For details see https://platform.openai.com/docs/api-reference/completions.
         """
+        parameters = interview_state['parameters']
         return {
             task: {
                 "messages": [{
                     "role":"user", 
                     "content": fill_prompt_with_interview_state(
-                        self.parameters[task]['prompt'], 
-                        self.parameters['interview_plan'],
+                        parameters[task]['prompt'], 
+                        parameters['interview_plan'],
                         interview_state
                     )
                 }],
-                "model": self.parameters[task].get('model', 'gpt-4o-mini'),
-                "max_tokens": self.parameters[task].get('max_tokens'),
-                "temperature": self.parameters[task].get('temperature')
+                "model": parameters[task].get('model', 'gpt-4o-mini'),
+                "max_tokens": int(parameters[task].get('max_tokens', 300)),
+                "temperature": float(parameters[task].get('temperature', 0))
             } for task in tasks
         }
 
