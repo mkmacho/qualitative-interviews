@@ -315,6 +315,10 @@ This file the HTML landing page users see and interact with. *Update the HTML or
 ## Issues
 - Storing floats in `boto3`, see https://github.com/boto/boto3/issues/665
 
+## Notes
+- Can scan DynamoDB using `aws dynamodb scan --table-name <TABLE_NAME>`
+
+
 ## TODO
 
 - **How to best deploy application?**

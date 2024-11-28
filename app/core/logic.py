@@ -39,6 +39,10 @@ def begin_interview_session(session_id:str, interview_id:str) -> dict:
     ))
     return {'session_id':session_id, 'message':parameters['first_question']}
 
+def retrieve_sessions() -> dict:
+    """ Return all existing interview sessions. """
+    return db.retrieve_all_sessions()
+
 def next_question(session_id:str, interview_id:str, user_message:str=None) -> dict:
     """
     Process user message and generate response by the AI-interviewer.

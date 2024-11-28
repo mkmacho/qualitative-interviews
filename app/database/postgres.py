@@ -55,3 +55,6 @@ class postgres(object):
             with conn.cursor() as cursor:
                 cursor.execute(upsert_query, (session_id, json.dumps(data)))
         logging.info(f"Session '{session_id}' updated!")
+
+    def retrieve_all_sessions(self) -> dict:
+        raise NotImplementedError

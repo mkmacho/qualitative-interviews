@@ -1,4 +1,5 @@
 sam build \
+	--template=template-local.yaml \
 	--use-container \
 	--no-cached
 

@@ -1,5 +1,4 @@
 from boto3 import resource
-from botocore.exceptions import ClientError
 import logging 
 import json
 
@@ -15,11 +14,10 @@ class DynamoDB(object):
     def load_remote_session(self, session_id:str) -> dict:
         """ Retrieve the interview session data from the database. """
         result = self.table.get_item(Key={'session_id':session_id})
-        data = result.get('Item', {})
-        if not data:
-            logging.warning(f"Can't load '{session_id}': not started!")
-        logging.info(f"Loaded remote data:\n{data}") # Delete
-        return data
+        if result.get('Item'):
+            return result['Item']
+        logging.warning(f"Can't load session '{session_id}': not started!")
+        return {}
 
     def delete_remote_session(self, session_id:str):
         """ Delete session data from the database. """
@@ -32,3 +30,29 @@ class DynamoDB(object):
         assert data['session_id'] == session_id
         self.table.put_item(Item=data)
         logging.info(f"Session '{session_id}' updated!")
+
+    def retrieve_all_sessions(self) -> list:
+        """ 
+        Retrieve chat history (list of dicts) for all sessions (list of dicts).
+
+        Returns
+            chats: (list) of "long" form data with one session-message per row, e.g.
+                [
+                    {'session_id':101, 'time':0, 'role':'interviewer', 'message':'Hello', ...}
+                    {'session_id':101, 'time':1, 'role':'respondent', 'message':'World', ...}
+                    ...
+                ]
+        """
+        chats = []
+        last_eval = None
+        while True:
+            # Handle multiple chunks with contiguous scan
+            resp = self.table.scan(ExclusiveStartKey=last_eval) if last_eval else self.table.scan()
+            chats.extend([
+                message for session in resp.get('Items',[]) for message in session['chat']
+            ])
+            if not resp.get('LastEvaluatedKey'): break
+            last_eval = resp['LastEvaluatedKey']
+
+        logging.info(f"Retrieved {len(chats)} messages!")
+        return chats
