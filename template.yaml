@@ -13,8 +13,8 @@ Globals:
     # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
       LogFormat: JSON
-      SystemLogLevel: INFO
-      ApplicationLogLevel: INFO
+      SystemLogLevel: WARN          # Change as you see fit
+      ApplicationLogLevel: ERROR    # Change as you see fit
     Architectures:
       - arm64 
   Api:

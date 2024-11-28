@@ -76,7 +76,8 @@ class InterviewManager(object):
             'content':message,
             'topic_idx':self.data['current_topic_idx'],
             'question_idx':self.data['current_question_idx'],
-            'time':str(datetime.now())
+            'time':str(datetime.now()),
+            'session_id':self.session_id
         })
 
     def repeated_messages(self, message:str, min_length:int=5) -> bool:
@@ -89,7 +90,7 @@ class InterviewManager(object):
     def terminate(self, reason:str="end_of_interview"):
         """ Record termination of interview. """
         self.data["terminated"] = True
-        logging.warning(f"Terminating interview because: '{reason}'")
+        logging.info(f"Terminating interview because: '{reason}'")
 
     def update_summary(self, summary:str):
         """ Update summary of prior interview. """

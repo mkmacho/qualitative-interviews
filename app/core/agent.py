@@ -1,19 +1,11 @@
 import logging
-from openai import OpenAI, AuthenticationError
+from openai import OpenAI
 from core.auxiliary import execute_queries, fill_prompt_with_interview_state, chat_to_string
 
 class Agent(object):
     """ Class to manage LLM-based agents. """
     def __init__(self, timeout:int=30, max_retries:int=3):
         self.client = OpenAI(timeout=timeout, max_retries=max_retries)
-        try:
-            self.client.chat.completions.create(
-                messages=[{'role':'user', 'content':'test'}], 
-                model='gpt-4o-mini'
-            )
-        except AuthenticationError as e:
-            logging.error(f"OpenAI connection failed: {e}")
-            raise e
         logging.info("OpenAI client instantiated. Should happen only once!")
 
     def construct_query(self, tasks:list, interview_state:dict) -> dict:

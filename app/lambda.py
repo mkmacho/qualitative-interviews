@@ -1,5 +1,14 @@
 import json
-from core.logic import next_question
+from core.logic import next_question, retrieve_sessions
+from decimal import Decimal
+
+# Custom JSON Encoder class
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        return super().default(obj)
+
 
 def handler(event, context):
     """
@@ -33,8 +42,25 @@ def handler(event, context):
         },
     }
 
-    if not event.get("body"):
-        return response | {"body": json.dumps({"message":"Hello World!\n"})}
+    request = json.loads(event.get('body', '{}'))
+    if request.get('route') == 'transcribe':
+        # Transcribe API
+        pass
+    elif request.get('route') == 'next':
+        payload = request.get('payload', {})
+        response['body'] = json.dumps(
+            next_question(
+                payload['session_id'], 
+                payload['interview_id'], 
+                payload.get('user_message')
+            )
+        )
+    elif request.get('route') == 'retrieve':
+        response['body'] = json.dumps(
+            retrieve_sessions(),
+            cls=DecimalEncoder
+        )
+    else:
+        raise ValueError("Invalid request. Please try again.")
 
-    assert isinstance(event['body'], str), "Malformed request body. Try again!"
-    return response | {"body": json.dumps(next_question(**json.loads(event['body'])))}
+    return response
