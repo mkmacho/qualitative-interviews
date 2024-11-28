@@ -24,8 +24,17 @@ def handler(event, context):
         
         Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
-    assert isinstance(event['body'], str), "Malformed request body. Try again!"
-    return {
+    response = {
         "statusCode": 200, 
-        "body": json.dumps(next_question(**json.loads(event['body'])))
+        "headers": {
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Origin": "*",             # Allow from anywhere 
+            "Access-Control-Allow-Methods": "POST"           # Allow only POST request 
+        },
     }
+
+    if not event.get("body"):
+        return response | {"body": json.dumps({"message":"Hello World!\n"})}
+
+    assert isinstance(event['body'], str), "Malformed request body. Try again!"
+    return response | {"body": json.dumps(next_question(**json.loads(event['body'])))}
