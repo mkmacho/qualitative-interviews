@@ -43,6 +43,9 @@ def retrieve_sessions() -> dict:
     """ Return all existing interview sessions. """
     return db.retrieve_all_sessions()
 
+def transcribe(data) -> dict:
+    return agent.transcribe(data)
+
 def next_question(session_id:str, interview_id:str, user_message:str=None) -> dict:
     """
     Process user message and generate response by the AI-interviewer.

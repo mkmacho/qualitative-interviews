@@ -15,7 +15,6 @@ lint = true
 [default.deploy.parameters]
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
-resolve_s3 = true
 region = "eu-north-1"
 
 [default.package.parameters]

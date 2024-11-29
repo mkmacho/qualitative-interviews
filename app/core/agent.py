@@ -8,6 +8,10 @@ class Agent(object):
         self.client = OpenAI(timeout=timeout, max_retries=max_retries)
         logging.info("OpenAI client instantiated. Should happen only once!")
 
+    def transcribe(self, data) -> dict:
+        # TODO: Implement transcription OpenAI API call
+        return {"Transcription":"Succesful"}
+
     def construct_query(self, tasks:list, interview_state:dict) -> dict:
         """ 
         Construct OpenAI API completions query, 
