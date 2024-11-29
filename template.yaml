@@ -20,7 +20,7 @@ Globals:
   Api:
     Cors:
       AllowMethods: "'GET,POST,OPTIONS'"
-      AllowHeaders: "'content-type'"
+      AllowHeaders: "'*'"
       AllowOrigin: "'*'"
 
 Resources:
@@ -31,46 +31,29 @@ Resources:
     Properties:
       CodeUri: app/
       Handler: lambda.handler
+      Policies:
+        # Give your Lambda full access to DynamoDB
+        - AmazonDynamoDBFullAccess
       Events:
         Interview:
           # More info about API Event Source: 
           # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Type: Api 
           Properties:
-            Path: /next
+            Path: /
             Method: post
       Environment:
         Variables:
           DATABASE: DYNAMODB
-          DATABASE_URL: !Ref DBTable
-          PORT: 8000  # required for the Lambda Web Adapter
-          OPENAI_API_KEY: YOUR_OPENAI_API_KEY # MAKE SURE TO REPLACE THIS WITH YOUR ACTUAL KEY!
-    Connectors:
-      DBTableConnector:
-        Properties:
-          Destination: 
-            Id: DBTable
-          Permissions: 
-            - Read
-            - Write 
-  DBTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: session_id
-          AttributeType: S
-      KeySchema:
-        - AttributeName: session_id
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
+          DATABASE_URL: INTERVIEWS
+          PORT: 8000                    # Required for the Lambda Web Adapter
+          OPENAI_API_KEY: !Ref Secret   # Required for OpenAI API
+
+Parameters:
+  Secret:
+    Type: String
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   InterviewApi:
     Description: API Gateway endpoint URL for function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/next/"
-  DynamoDBTable:
-    Description: DynamoDB Table
-    Value: !Ref DBTable
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

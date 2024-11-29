@@ -1,5 +1,5 @@
 import json
-from core.logic import next_question, retrieve_sessions
+from core.logic import next_question, retrieve_sessions, transcribe
 from decimal import Decimal
 
 # Custom JSON Encoder class
@@ -44,8 +44,10 @@ def handler(event, context):
 
     request = json.loads(event.get('body', '{}'))
     if request.get('route') == 'transcribe':
-        # Transcribe API
-        pass
+        payload = request.get('payload', {})
+        response['body'] = json.dumps(
+            transcribe(payload)
+        )
     elif request.get('route') == 'next':
         payload = request.get('payload', {})
         response['body'] = json.dumps(

@@ -76,6 +76,7 @@ class InterviewManager(object):
             'content':message,
             'topic_idx':self.data['current_topic_idx'],
             'question_idx':self.data['current_question_idx'],
+            'closing_idx':self.data['current_finish_idx'],
             'time':str(datetime.now()),
             'session_id':self.session_id
         })

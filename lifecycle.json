@@ -1,0 +1,12 @@
+{
+    "Rules": [
+        {
+            "Filter": {},
+            "Status": "Enabled",
+            "Expiration": {
+                "Days": 1
+            },
+            "ID": "QuickExpiration"
+        }
+    ]
+}

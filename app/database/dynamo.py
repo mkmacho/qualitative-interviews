@@ -31,9 +31,10 @@ class DynamoDB(object):
         self.table.put_item(Item=data)
         logging.info(f"Session '{session_id}' updated!")
 
-    def retrieve_all_sessions(self) -> list:
+    def retrieve_sessions(self, sessions:list=None) -> list:
         """ 
-        Retrieve chat history (list of dicts) for all sessions (list of dicts).
+        Retrieve chat history (list of dicts) for specified sessions (list of dicts)
+        or *all* sessions if no sessions specified in optional argument.
 
         Returns
             chats: (list) of "long" form data with one session-message per row, e.g.
@@ -49,7 +50,8 @@ class DynamoDB(object):
             # Handle multiple chunks with contiguous scan
             resp = self.table.scan(ExclusiveStartKey=last_eval) if last_eval else self.table.scan()
             chats.extend([
-                message for session in resp.get('Items',[]) for message in session['chat']
+                message for session in resp.get('Items',[]) 
+                for message in session['chat'] if session['session_id'] in sessions
             ])
             if not resp.get('LastEvaluatedKey'): break
             last_eval = resp['LastEvaluatedKey']
