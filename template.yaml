@@ -41,7 +41,8 @@ Resources:
             Method: post
       Environment:
         Variables:
-          DATABASE: !Ref DBTable
+          DATABASE: DYNAMODB
+          DATABASE_URL: !Ref DBTable
           PORT: 8000  # required for the Lambda Web Adapter
           OPENAI_API_KEY: YOUR_OPENAI_API_KEY # MAKE SURE TO REPLACE THIS WITH YOUR ACTUAL KEY!
     Connectors:
