@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
   rm -rf /var/lib/apt/lists/*
 
 # Config
-COPY config/nginx.conf /etc/nginx/sites-enabled/
+COPY flask_config/nginx.conf /etc/nginx/sites-enabled/
 RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf && \
 	rm /etc/nginx/sites-enabled/default
 

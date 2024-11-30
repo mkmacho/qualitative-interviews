@@ -1,13 +1,6 @@
 import json
 from core.logic import next_question, retrieve_sessions, transcribe
-from decimal import Decimal
-
-# Custom JSON Encoder class
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Decimal):
-            return str(obj)
-        return super().default(obj)
+from core.auxiliary import DecimalEncoder
 
 
 def handler(event, context):

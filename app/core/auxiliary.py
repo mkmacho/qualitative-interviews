@@ -3,6 +3,15 @@ import re
 import time
 import logging 
 import os
+import json 
+from decimal import Decimal
+
+# Custom JSON Encoder class
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        return super().default(obj)
 
 def cleaned(response, task:str):
     output = response.choices[0].message.content.strip("\n\" '''")
