@@ -39,12 +39,15 @@ def begin_interview_session(session_id:str, interview_id:str) -> dict:
     ))
     return {'session_id':session_id, 'message':parameters['first_question']}
 
-def retrieve_sessions() -> dict:
-    """ Return all existing interview sessions. """
-    return db.retrieve_all_sessions()
+def retrieve_sessions(sessions:list=None) -> dict:
+    """ Return specified or all existing interview sessions. """
+    return db.retrieve_sessions(sessions)
 
 def transcribe(data) -> dict:
-    return agent.transcribe(data)
+    """ Return audio file transcription using OpenAI Whisper API """
+    # TODO: Finalize this endpoint
+    audio_file = open("/path/to/file/audio.mp3", "rb")
+    return agent.transcribe(audio_file)
 
 def next_question(session_id:str, interview_id:str, user_message:str=None) -> dict:
     """

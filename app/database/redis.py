@@ -41,6 +41,28 @@ class RedisWrapper(object):
         assert self.client.get(session_id)
         logging.info(f"Session '{session_id}' updated!")
 
-    def retrieve_all_sessions(self) -> list:
-        raise NotImplementedError
+    def retrieve_sessions(self, sessions:list=None) -> list:
+        """ 
+        Retrieve chat history (list of dicts) for specified sessions (list of dicts)
+        or *all* sessions if no sessions specified in optional argument.
+
+        Returns
+            chats: (list) of "long" form data with one session-message per row, e.g.
+                [
+                    {'session_id':101, 'time':0, 'role':'interviewer', 'message':'Hello', ...}
+                    {'session_id':101, 'time':1, 'role':'respondent', 'message':'World', ...}
+                    ...
+                ]
+        """
+        chats = []
+        for session_id in self.client.keys():
+            # Skip keys not specified
+            if sessions and not session_id in sessions: 
+                continue
+            # Add all messages in current interview session
+            chats.extend([message for message in json.loads(
+                self.client.get(session_id))['chat']
+            ])
+        logging.info(f"Retrieved {len(chats)} messages!")
+        return chats
 

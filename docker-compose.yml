@@ -13,6 +13,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
+      - DATABASE=POSTGRES
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/interviews
       - OPENAI_API_KEY=REPLACE_ME_WITH_YOUR_OPENAI_API_KEY
   db:

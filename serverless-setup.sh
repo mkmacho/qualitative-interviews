@@ -9,7 +9,7 @@ aws s3api create-bucket \
 # Get rid of old templates after 24hours
 aws s3api put-bucket-lifecycle-configuration \
 	--bucket serverless-interviews-bucket  \
-	--lifecycle-configuration file://lifecycle.json
+	--lifecycle-configuration file://aws_config/s3-lifecycle.json
 
 # Create AWS DynamoDB table to store interviews
 aws dynamodb create-table \

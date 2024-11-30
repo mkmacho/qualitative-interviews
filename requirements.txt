@@ -1,5 +1,0 @@
-Flask==3.0.3
-uWSGI==2.0.27			
-openai==1.55.3
-psycopg2-binary==2.9.10 # For postgres
-jsonschema==4.23.0		# For request validation

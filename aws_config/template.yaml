@@ -29,7 +29,7 @@ Resources:
     # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Type: AWS::Serverless::Function   
     Properties:
-      CodeUri: app/
+      CodeUri: ../app/
       Handler: lambda.handler
       Policies:
         # Give your Lambda full access to DynamoDB

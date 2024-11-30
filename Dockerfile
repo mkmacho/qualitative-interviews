@@ -14,13 +14,13 @@ COPY config/nginx.conf /etc/nginx/sites-enabled/
 RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf && \
 	rm /etc/nginx/sites-enabled/default
 
-COPY config/app.ini /config/
-COPY /config/supervisor.conf /etc/supervisor/conf.d/
+COPY flask_config/app.ini /config/
+COPY flask_config/supervisor.conf /etc/supervisor/conf.d/
 
 # Local app
 ENV PYTHONDONTWRITEBYTECODE 1
 COPY app /app
-COPY requirements.txt /config/
+COPY flask_config/requirements.txt /config/
 RUN pip install --upgrade pip && \
 	pip install -r /config/requirements.txt
 
