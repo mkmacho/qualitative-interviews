@@ -27,7 +27,7 @@ def landing(interview_id:str, session_id:str):
 @decorators.handle_500
 def next():
 	""" Internally called to continue interview. """
-	payload = request.get_json(force=True)
+	payload = request.get_json(force=True)['payload']
 	response = logic.next_question(**payload)
 	return jsonify(response)
 

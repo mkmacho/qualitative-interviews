@@ -3,6 +3,8 @@ import logging
 import os
 from redis import Redis
 from redis.exceptions import ConnectionError as RedisConnectionError
+from core.auxiliary import DecimalEncoder
+
 
 class RedisWrapper(object):
     def __init__(self) :
@@ -37,7 +39,7 @@ class RedisWrapper(object):
     def update_remote_session(self, session_id:str, data:dict):
         """ Update or insert session data in the database. """
         assert isinstance(data, dict)
-        self.client.set(session_id, json.dumps(data))
+        self.client.set(session_id, json.dumps(data, cls=DecimalEncoder))
         assert self.client.get(session_id)
         logging.info(f"Session '{session_id}' updated!")
 

@@ -2,6 +2,7 @@ import json
 import logging 
 from psycopg2 import connect, OperationalError
 from psycopg2.extras import RealDictCursor 
+from core.auxiliary import DecimalEncoder
 
 
 class PostgreSQL(object):
@@ -49,13 +50,13 @@ class PostgreSQL(object):
 
     def update_remote_session(self, session_id:str, data:dict):
         """ Update or insert session data in the database. """
-        upsert_query = """
+        insert_query = """
             INSERT INTO sessions (session_id, data) VALUES (%s, %s)
             ON CONFLICT (session_id) DO UPDATE SET data = EXCLUDED.data;
         """
         with connect(self.database_url) as conn:
             with conn.cursor() as cursor:
-                cursor.execute(upsert_query, (session_id, json.dumps(data)))
+                cursor.execute(insert_query, (session_id, json.dumps(data, cls=DecimalEncoder)))
         logging.info(f"Session '{session_id}' updated!")
 
     def retrieve_sessions(self, sessions:list=None) -> list:
