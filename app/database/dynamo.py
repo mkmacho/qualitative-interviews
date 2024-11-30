@@ -49,10 +49,12 @@ class DynamoDB(object):
         while True:
             # Handle multiple chunks with contiguous scan
             resp = self.table.scan(ExclusiveStartKey=last_eval) if last_eval else self.table.scan()
-            chats.extend([
-                message for session in resp.get('Items',[]) 
-                for message in session['chat'] if session['session_id'] in sessions
-            ])
+            for session in resp.get('Items',[]):
+                # Skip keys not specified
+                if sessions and not session['session_id'] in sessions: 
+                    continue
+                # Add all messages in current interview session
+                chats.extend([message for message in session['chat']])
             if not resp.get('LastEvaluatedKey'): break
             last_eval = resp['LastEvaluatedKey']
 

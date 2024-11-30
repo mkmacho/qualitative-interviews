@@ -3,6 +3,7 @@
 
 echo "Building application including local changes ..."
 sam build \
+	--template aws_config/template.yaml \
 	--use-container \
 	--no-cached
 
@@ -13,5 +14,3 @@ sam deploy \
 	--no-confirm-changeset \
 	--no-fail-on-empty-changeset \
 	--s3-bucket serverless-interviews-bucket
-
-echo "Succesfully deployed. Save API Gateway endpoint URL above!"

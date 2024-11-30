@@ -58,5 +58,32 @@ class PostgreSQL(object):
                 cursor.execute(upsert_query, (session_id, json.dumps(data)))
         logging.info(f"Session '{session_id}' updated!")
 
-    def retrieve_all_sessions(self) -> list:
-        raise NotImplementedError
+    def retrieve_sessions(self, sessions:list=None) -> list:
+        """ 
+        Retrieve chat history (list of dicts) for specified sessions (list of dicts)
+        or *all* sessions if no sessions specified in optional argument.
+
+        Returns
+            chats: (list) of "long" form data with one session-message per row, e.g.
+                [
+                    {'session_id':101, 'time':0, 'role':'interviewer', 'message':'Hello', ...}
+                    {'session_id':101, 'time':1, 'role':'respondent', 'message':'World', ...}
+                    ...
+                ]
+        """
+        chats = []
+        select_query = "SELECT data FROM sessions;"
+        with connect(self.database_url) as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(select_query)
+                result = cursor.fetchall()
+        if result:
+            for session_obj in result:
+                # Skip keys not specified
+                if sessions and not session_obj['data']['session_id'] in sessions: 
+                    continue
+                # Add all messages in current interview session
+                chats.extend([message for message in session_obj['data']['chat']])
+
+        logging.info(f"Retrieved {len(chats)} messages!")
+        return chats
