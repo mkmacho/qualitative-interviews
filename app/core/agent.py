@@ -1,6 +1,8 @@
 import logging
 from openai import OpenAI
 from core.auxiliary import execute_queries, fill_prompt_with_interview_state, chat_to_string
+from io import BytesIO
+from base64 import b64decode
 
 class Agent(object):
     """ Class to manage LLM-based agents. """
@@ -8,12 +10,20 @@ class Agent(object):
         self.client = OpenAI(timeout=timeout, max_retries=max_retries)
         logging.info("OpenAI client instantiated. Should happen only once!")
 
-    def transcribe(self, audio_file, model:str="whisper-1") -> str:
-        transcription = client.audio.transcriptions.create(
+    def transcribe(self, audio, isBase64Encoded:bool=False, model:str="whisper-1") -> str:
+        """ Transcribe audio file. """
+        if isBase64Encoded:
+            audio_file = BytesIO(b64decode(audio))
+        elif isinstance(audio, str):
+            audio_file = BytesIO(audio.encode('utf-8'))
+        else:
+            audio_file = BytesIO(audio)
+
+        response = self.client.audio.transcriptions.create(
           model=model, 
           file=audio_file
         )
-        return transcription.text
+        return response.text
 
     def construct_query(self, tasks:list, interview_state:dict) -> dict:
         """ 

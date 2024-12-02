@@ -18,7 +18,6 @@ COPY flask_config/app.ini /config/
 COPY flask_config/supervisor.conf /etc/supervisor/conf.d/
 
 # Local app
-ENV PYTHONDONTWRITEBYTECODE 1
 COPY app /app
 COPY flask_config/requirements.txt /config/
 RUN pip install --upgrade pip && \

@@ -37,11 +37,5 @@ template-local.yaml
 .dbdata
 *.csv
 
-## Docker
-run.sh
-docker-compose-local.yml
-
 ## SAM
 .aws-sam/
-.samconfig.toml
-*/build/*

@@ -39,7 +39,7 @@ def handler(event, context):
     payload = request.get('payload', {})
     if request.get('route') == 'transcribe':
         response['body'] = json.dumps(
-            transcribe(payload)
+            transcribe(**payload)
         )
     elif request.get('route') == 'next':
         response['body'] = json.dumps(

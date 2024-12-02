@@ -32,7 +32,7 @@ Resources:
       CodeUri: ../app/
       Handler: lambda.handler
       Policies:
-        # Give your Lambda full access to DynamoDB
+        # Give your Lambda access to DynamoDB
         - AmazonDynamoDBFullAccess
       Events:
         Interview:
@@ -45,13 +45,23 @@ Resources:
       Environment:
         Variables:
           DATABASE: DYNAMODB
-          DATABASE_URL: INTERVIEWS
-          PORT: 8000                    # Required for the Lambda Web Adapter
-          OPENAI_API_KEY: !Ref Secret   # Required for OpenAI API
+          DATABASE_URL: !Ref TableName  # Required connector to DynamoDB backend 
+          PORT: !Ref Port                    
+          OPENAI_API_KEY: !Ref OpenAIAPIKey   
 
 Parameters:
-  Secret:
+  OpenAIAPIKey:
+    Description: Required OpenAI API key for GPT integration
     Type: String
+  Port:
+    Description: Required for the Lambda Web Adapter
+    Type: String
+    Default: 8000
+  TableName:
+    Description: Required name of table which application will write to
+    Type: String
+    Default: INTERVIEWS
+
 
 Outputs:
   InterviewApi:
