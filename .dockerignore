@@ -30,18 +30,11 @@ wheels/
 .installed.cfg
 *.egg
 
-template-local.yaml
-
 ## Application 
 *report*
 .dbdata
 *.csv
 
-## Docker
-run.sh
-docker-compose-local.yml
 
 ## SAM
 .aws-sam/
-.samconfig.toml
-*/build/*
