@@ -1,6 +1,7 @@
 import json
 from core.logic import next_question, retrieve_sessions, transcribe
 from core.auxiliary import DecimalEncoder
+from base64 import b64decode
 
 
 def handler(event, context):
@@ -39,7 +40,7 @@ def handler(event, context):
     payload = request.get('payload', {})
     if request.get('route') == 'transcribe':
         response['body'] = json.dumps(
-            transcribe(**payload)
+            transcribe(audio=b64decode(payload.get('audio')))
         )
     elif request.get('route') == 'next':
         response['body'] = json.dumps(
