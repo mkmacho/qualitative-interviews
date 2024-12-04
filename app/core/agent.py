@@ -1,8 +1,16 @@
 import logging
-from openai import OpenAI
 from core.auxiliary import execute_queries, fill_prompt_with_interview_state, chat_to_string
 from io import BytesIO
 from base64 import b64decode
+import os
+
+if os.getenv("APP_ENV", "PROD") == "LOCAL":
+    import collections
+    if not hasattr(collections, 'MutableSet'):
+        collections.MutableSet = collections.abc.MutableSet
+        collections.MutableMapping = collections.abc.MutableMapping
+
+from openai import OpenAI
 
 class Agent(object):
     """ Class to manage LLM-based agents. """

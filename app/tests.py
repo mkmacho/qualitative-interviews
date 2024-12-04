@@ -14,7 +14,6 @@ class APITestCase(unittest.TestCase):
 		with app.test_client() as client:
 			response = client.get('/load/TEST_SESSION')
 		self.assertEqual(response.status_code, 200)
-		print(f"\nReceived 'load' response: {json.loads(response.data)}\n")
 
 	def test_interview(self):
 		with app.test_client() as client:
@@ -22,9 +21,12 @@ class APITestCase(unittest.TestCase):
 			self.assertEqual(r.status_code, 200)
 			response = client.post('/next', 
 				data=json.dumps({
-					"user_message": "I can't afford it and the stock market is rigged.",
-					"interview_id": "STOCK_MARKET",
-					"session_id": "TEST_SESSION"
+					"route":"next",
+					"payload":{
+						"user_message": "I can't afford it and the stock market is rigged.",
+						"interview_id": "STOCK_MARKET",
+						"session_id": "TEST_SESSION"
+					}
 				}), 
 				content_type='application/json'
 			)
@@ -39,7 +41,6 @@ class APITestCase(unittest.TestCase):
 		with app.test_client() as client:
 			response = client.get('/delete/TEST_SESSION')
 		self.assertEqual(response.status_code, 200)
-		print(f"\nReceived 'delete' response: {response.text}\n")
 
 
 if __name__ == '__main__':
