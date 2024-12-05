@@ -2,7 +2,6 @@ import json
 from core.logic import next_question, retrieve_sessions, transcribe
 from core.auxiliary import DecimalEncoder
 
-
 def handler(event, context):
     """
     Lambda function for `/next` endpoint.
@@ -29,9 +28,9 @@ def handler(event, context):
     response = {
         "statusCode": 200, 
         "headers": {
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Access-Control-Allow-Origin": "*",             # Allow from anywhere 
-            "Access-Control-Allow-Methods": "POST"           # Allow only POST request 
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Origin": "*",            
+            "Access-Control-Allow-Methods": "POST"            
         },
     }
 
@@ -39,7 +38,7 @@ def handler(event, context):
     payload = request.get('payload', {})
     if request.get('route') == 'transcribe':
         response['body'] = json.dumps(
-            transcribe(**payload)
+            transcribe(payload['audio'])
         )
     elif request.get('route') == 'next':
         response['body'] = json.dumps(

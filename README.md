@@ -1,6 +1,6 @@
 # qualitative-interviews #
 
-Companion codebase for ["Conducting Qualitative Interviews with AI"](https://dx.doi.org/10.2139/ssrn.4583756). Set up your own interview structure and leverage [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs) to probe specified topics, smoothly transition to new topics, and gracefully close interviews with respondents. 
+Companion codebase for ["Conducting Qualitative Interviews with AI"](https://dx.doi.org/10.2139/ssrn.4583756). Set up your own interview structure and leverage [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs) to probe specified topics, smoothly transition between topics, and gracefully close interviews with respondents. 
 
 Suggested citation:
 ```
@@ -11,88 +11,121 @@ Chopra, Felix and Haaland, Ingar, Conducting Qualitative Interviews with AI (202
 ## Table of Contents
 * [Usage](#usage)
   * [Requirements](#requirements)
-  * [Docker](#docker)
-  * [Manually](#manually)
+  * [Local](#local)
+  * [Flask](#flask)
+  * [Serverless](#serverless)
   * [Customization](#customization)
 * [API](#api)
 * [App Structure](#app-structure)
-* [TODO](#todo)
 
 
 
 ## Usage
 
-This is a Flask web application in Python that run with [uWSGI and Nginx](https://flask.palletsprojects.com/en/stable/deploying/uwsgi/). We can install manually or run it in a single Docker container.
+This repository contains code to help you build, customize, test, and run AI interviews [locally](#Local), deploy a containerized [Flask](#Flask) application to any server, or deploy as a [serverless](#Serverless) [Lambda](https://docs.aws.amazon.com/lambda/) Function to Amazon Web Services (AWS).
+
 
 ### Requirements
 
-The application requires OpenAI API access. You can obtain API keys [here](https://platform.openai.com/). You will then need to supply your secret key as an environment variable in the `docker-compose` YML file as `OPEN_AI_KEY`. 
+The application requires OpenAI API access. You can obtain API keys [here](https://platform.openai.com/). 
+
+You can then need to supply your secret key as an environment variable as follows:
+```bash
+export OPENAI_API_KEY='<YOUR_OPENAI_API_KEY>'
+```
+
+which will now be supplied to the application automatically!
+
+
+### Local
+
+To quickly run the application on your local machine, where it will be easy to implement changes to the interview guidelines and test the results, follow these instructions.
+
+We advise you to first create a virtual environment so as to install necessary packages in a clean environment, guaranteed of no clashing dependencies.
+
+```bash
+ python3 -m venv my-test-env
+ cd my-test-env
+ source ./bin/activate
+```
+
+Then clone this project from Github, or if you have already cloned, activate a virtual environment. Now, install the necessary packages defined in the repository's `requirements.txt` file with `pip` and export the default local PostgrSQL database:
+
+```bash
+git clone https://github.com/mkmacho/qualitative-interviews.git
+cd qualitative-interviews
+
+pip install -r flask_config/requirements.txt
+
+export DATABASE_URL=postgresql://postgres:postgres@0.0.0.0:5432/interviews
+```
+
+Finally, we are ready to start serving the application by simply running:
+
+```bash
+python app/app.py
+```
+
+This starts up our Flask web application in Python that run with [uWSGI and Nginx](https://flask.palletsprojects.com/en/stable/deploying/uwsgi/). 
+
+As you can see in `app.py`, we are listening on port 8000 so you can now make requests to your local host at *http://0.0.0.0:8000/*!
 
 
 ### Docker
 
 The simplest way to then run the application is via [Docker](https://www.docker.com/products/docker-desktop/). You can easily build a Docker image containing only the necessary packages in a contained environment -- from whatever operating system!
 
-To start a `qualitative-interviews` container, first clone the project:
+#### Build
+
+To *build* a `qualitative-interviews` container, first clone the project:
 
 ```bash
 git clone https://github.com/mkmacho/qualitative-interviews.git
 cd qualitative-interviews
 ```
 
-Then build and run a container using the provided `Dockerfile` and the template `docker-compose` YAML, modified by replacing "YOUR_OPENAI_API_KEY" with your actual key.
+Then build and run a container using the provided `Dockerfile` and the template `docker-compose` YAML, which will automatically pick up your OpenAI API key from our environment, by running:
 
 ```bash
-docker-compose up --build --detach
+docker compose up --build --detach
 ```
 
-Just like that, you can now make requests to your local host listening (by default, at least) port 8000, e.g. *http://0.0.0.0:8000/*.
+Note that the `--build` option builds the image locally from the `Dockerfile`, while removing the `build` option will *pull* the image from DockerHub. The `--detach` option runs the containers in the background. 
 
-Finally, note that you can stop and remove containers and networks in the compose file using ``docker-compose down``.
+Just like that, you can now make requests to your local host listening (by default) port 8000, e.g. *http://0.0.0.0:8000/*.
 
+Note that you can stop and remove containers and networks in the compose file using `docker compose down`.
 
-### Manually 
+#### Deploy
 
-Otherwise, you can set it up by hand. We advise you to first create a virtual environment so as to install necessary packages in a clean environment, guaranteed of no clashing dependencies.
+If you want to deploy the Flask application remotely, Docker makes that easy too!
+
+From your remote host make sure Docker is [installed](https://docs.docker.com/engine/install/ubuntu/) and then copy the `docker-compose` file. Then, again, we can simply run from the command line:
 
 ```bash
- python3 -m venv venv
- cd venv
- source ./bin/activate
+docker compose up --detach 
 ```
 
-Then clone the project, install the necessary packages with `pip`, and export necessary environment variables:
+making use of the remote DockerHub image builds which we mentioned previously. 
 
-```bash
-git clone https://github.com/mkmacho/qualitative-interviews.git
-cd qualitative-interviews
+Your remote machine will now forward requests to port 8000 onto port 80 on which the Docker container is listening, thereby processing remote requests. 
 
-pip install -r requirements.txt
 
-export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-export DATABASE_URL="<YOUR_DB_URL>"
-```
+### Serverless
 
-Finally, start serving the application by running:
+Finally, to run the application serverless on AWS you will need to create an AWS account if you do not yet have one and download (public and secret) access keys. With these command line interface keys, simply run `./serverless-setup.sh <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION>` which will configure your command line AWS credentials, create an AWS storage bucket where build template will be stored, and create an AWS Dynamo database table to persistently store interviews sessions (in the Cloud). This has to be run just once!
 
-```bash
-python app/app.py
-```
-
-And again you can make requests to your local host at *http://0.0.0.0:8000/*.
+Then, run `./serverless-deploy.sh` which will again take advantage of your environment stored OpenAI key to deploy the Lambda function and expose a public endpoint for you to make requests to!
 
 
 ### Customization
 
 To customize the structure of the interviews (e.g. the topics covered, the duration, the LLM prompts, etc.) simply add or edit a new `python` dictionary containing relevant information for your project.
 
-Currently, in `parameters.py` you will see one element in `INTERVIEW_PARAMETERS`: *STOCK_MARKET_PARTICIPATION*. This interview parameters object holds the guidelines for interviewing respondents on their lack of participation in the stock market, but generally it will be beneficial to use this as a template for constructing your own interview parameters.
+Currently, in `parameters.py` you will see a few elements in `INTERVIEW_PARAMETERS`: *STOCK_MARKET* and *VOTING*. These interview parameters objects holds the guidelines for interviewing respondents on their lack of participation in the stock market (or voting), but generally it will be beneficial to use this as a template for constructing your own interview parameters.
 
 Specifically, the parameters object must contain elements:
 
-* *moderate_answers*: whether to active the moderation agent for incoming answers from the respondent
-* *moderate_questions*: whether to check outgoing questions with OpenAI's moderation endpoint
-* *summarize*: whether to active the summarization agent
 * *first_question*: the initial prompt that begins the interview
 * *interview_plan*: the list of topic dictionaries which include the `topic` as well as the `length`, indicating for how many questions to cover in this topic
 * *closing_questions*: the (fixed) list of questions/comments (if any) with which to end the interview
@@ -101,6 +134,13 @@ Specifically, the parameters object must contain elements:
 * *flagged_message*: the message to display to adversarial behavior
 * *off_topic_message*: the message to display if the user's response is deemed off-topic
 
+with the following elements being defaulted:
+
+* *moderate_answers*: (True) whether to active the moderation agent for incoming answers from the respondent
+* *moderate_questions*: (True) whether to check outgoing questions with OpenAI's moderation endpoint
+* *summarize*: (True) whether to active the summarization agent
+
+
 As well as elements defining the LLM-interactions:
 
 * *summary*: if/how you would like the AI-interviewer to summarize the interview thus far
@@ -108,9 +148,9 @@ As well as elements defining the LLM-interactions:
 * *probe*: if/how you would like the AI-interviewer to probe topics
 * *moderator*: if/how you would like the AI-interviewer to ascertain user message relevance
 
-All of which define a `prompt` for the AI-interviewer, a maximum length (`max_tokens`) for the desired response, a `temperature` for the variability of the response, and a `model` for the LLM to use. Note that the prompt may reference the current state of the interview or the defined interview structure through the use of curly bracket variables (e.g. `{topics}` will be populated by the defined `interview_plan`).
+Where the last four objects above define a `prompt` for the AI-interviewer, a maximum length (`max_tokens`) for the desired response, a `temperature` for the variability of the response, and a `model` for the LLM to use. Note that the prompt may reference the current state of the interview or the defined interview structure through the use of curly bracket variables (e.g. `{topics}` will be populated by the defined `interview_plan`).
 
-A sample of this template for *STOCK_MARKET_PARTICIPATION* interviews is displayed here:
+A sample of this template for *STOCK_MARKET* interviews is displayed here:
 
 ```
 {
@@ -182,11 +222,10 @@ A sample of this template for *STOCK_MARKET_PARTICIPATION* interviews is display
 
 ## API
 
-The main API is to begin and host an interview. This is done by making a GET request with the interview `interview_id` and the interview `session_id` in the URL. 
+The main API `\next` is to continue (or begin, if not started) an interview. This is done by making an HTTP POST request with the the key-value pair `route`:`next` and interview type `interview_id`, session `session_id`, and (if not the first request) the respondent's message (`user_message`) in the `payload` sub-object.  
 
-For example, given an interview parameter ID (e.g. `interview_id == 'STOCK_MARKET'`) and the (unique) session ID of the interview (`session_id == 'TEST_SESSION'`), we can make a request to the host and port our application is serving on plus these keys, in this case just opening `http://0.0.0.0:8000/STOCK_MARKET/TEST_SESSION` on any browser. The web page will show you the beginning question of the interview, as specified in the parameters corresponding to the `parameters_id` you supplied, and prompt the user to answer this question. Each subsequent response by the user will be processed by the 'AI-interviewer' and the web page will dynamically update to show this ongoing chat. 
+For example, given an interview parameter ID `interview_id == 'STOCK_MARKET'` and the (unique) session ID of the interview, e.g. `session_id == 'TEST_SESSION'`, we can make a request to the host and port our application is serving on plus these keys to locally test the application interface: in this case just opening `http://0.0.0.0:8000/STOCK_MARKET/TEST_SESSION` on any browser. The web page will show you the beginning question of the interview, as specified in the parameters corresponding to the `parameters_id` you supplied, and prompt the user to answer this question. Each subsequent response by the user will be processed by the 'AI-interviewer' and the web page will dynamically update to show this ongoing chat. Alternatively, you make POST calls mimcking production requests through the command line (e.g. `curl`), Postman, or Python (e.g. `requests` library). 
 
-Note that the dynamic updating is done in the back end through a `POST` request to the internal `/next` endpoint which, for a given session and user reply, determines the following message to be shown.
 
 
 ### Testing 
@@ -314,28 +353,9 @@ This file the HTML landing page users see and interact with. *Update the HTML or
 
 ## Issues
 - Storing floats in `boto3`, see https://github.com/boto/boto3/issues/665
+- Fix spare algorithm in `app.ini`
 
 ## Notes
 - Can scan DynamoDB using `aws dynamodb scan --table-name <TABLE_NAME>`
 
-
-## TODO
-
-- **How to best deploy application?**
-    - [Google](https://realpython.com/python-web-applications/)
-    - AWS
-        - *Will start with trying to deploy here 06/12!*
-    - Azure
-        - Potentially easy for academics to use through institutions
-    - *Regardless, want either easy script set-up or detailed manual instructions*
-- **Stress testing**
-    - *Recall: Need low latency, handle multiple queries sudden influx*    
-    - Is bottleneck given machine/instance memory limit?
-    - Can set (rule) number of child processes/workers?
-    - Is our API (similarly OpenAI) parallel or concurrent?
-- Fix spare algorithm in `app.ini`
-
-### NOTES:
-- For PostgreSQL
-    - Change `/opt/homebrew/var/postgresql\@15/pg_hba.conf` and `/postgresql.conf` to accept local incoming connections if building/testing locally, then `brew services restart postgresql@15`
 

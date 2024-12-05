@@ -12,24 +12,22 @@ if os.getenv("APP_ENV", "PROD") == "LOCAL":
 
 from openai import OpenAI
 
+
 class Agent(object):
     """ Class to manage LLM-based agents. """
     def __init__(self, timeout:int=30, max_retries:int=3):
         self.client = OpenAI(timeout=timeout, max_retries=max_retries)
         logging.info("OpenAI client instantiated. Should happen only once!")
 
-    def transcribe(self, audio, isBase64Encoded:bool=False, model:str="whisper-1") -> str:
+    def transcribe(self, audio, model:str="whisper-1") -> str:
         """ Transcribe audio file. """
-        if isBase64Encoded:
-            audio_file = BytesIO(b64decode(audio))
-        elif isinstance(audio, str):
-            audio_file = BytesIO(audio.encode('utf-8'))
-        else:
-            audio_file = BytesIO(audio)
+        audio_file = BytesIO(b64decode(audio))
+        audio_file.name = "audio.webm"
 
         response = self.client.audio.transcriptions.create(
           model=model, 
-          file=audio_file
+          file=audio_file,
+          language="en" # English language input
         )
         return response.text
 
