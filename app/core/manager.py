@@ -69,8 +69,7 @@ class InterviewManager(object):
         return False
 
     def add_message(self, message:str, role:str="user"):
-        """ Add to chat history. """
-        assert role in ["user", "assistant"]
+        """ Add to chat transcript. """
         self.data['chat'].append({
             'role':role, 
             'content':message,
@@ -99,12 +98,10 @@ class InterviewManager(object):
 
     def get_current_topic(self) -> int:
         """ Return topic index. """
-        assert self.data["current_topic_idx"] == int(self.data["current_topic_idx"]) # Delete
         return int(self.data["current_topic_idx"])
 
     def get_current_topic_question(self) -> int:
         """ Return question index within topic. """
-        assert self.data["current_question_idx"] == int(self.data["current_question_idx"]) # Delete
         return int(self.data["current_question_idx"])
 
     def get_final_question(self) -> str:

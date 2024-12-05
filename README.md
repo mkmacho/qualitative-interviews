@@ -30,6 +30,7 @@ This repository contains code to help you build, customize, test, and run AI int
 The application requires OpenAI API access. You can obtain API keys [here](https://platform.openai.com/). 
 
 You can then need to supply your secret key as an environment variable as follows:
+
 ```bash
 export OPENAI_API_KEY='<YOUR_OPENAI_API_KEY>'
 ```
@@ -49,7 +50,7 @@ We advise you to first create a virtual environment so as to install necessary p
  source ./bin/activate
 ```
 
-Then clone this project from Github, or if you have already cloned, activate a virtual environment. Now, install the necessary packages defined in the repository's `requirements.txt` file with `pip` and export the default local PostgrSQL database:
+Then clone this project from Github, or if you have already cloned, activate a virtual environment. Now, install the necessary packages defined in the repository's `requirements.txt` file with `pip` and export the default local PostgreSQL database:
 
 ```bash
 git clone https://github.com/mkmacho/qualitative-interviews.git
@@ -236,6 +237,8 @@ A sample of this template for *STOCK_MARKET* interviews is displayed here:
 
 ## API
 
+### next
+
 The main API `\next` is to continue (or begin, if not started) an interview. This is done by making an HTTP POST request with the following body:
 
 ```
@@ -269,13 +272,96 @@ response = requests.post("http://0.0.0.0:8000/next", json=body)
 or similarly through [Postman](https://www.postman.com/api-platform/api-testing/).
 
 
-### Interface
+#### Interface
 
 We can make additionally test the application interface non-programmatically when built using Flask locally or on a remote server.
 
 Given the host and host port our application is serving up, plus the previously specified `interview_id` and a unique `session_id` we can simply open up a browser to this URL (making a GET request to begin the interview) and walk through an interview.
 
 For example, having exposed local "http://0.0.0.0:8000/", we can navigate to `http://0.0.0.0:8000/STOCK_MARKET/TEST-SESSION-123` on your browser of choice. This will open a web page displaying the `interview_id`-specified first question of the interview (as specified in the `parameters.py` file) and prompt the user to answer this question. Each subsequent response by the user will be processed by the AI-interviewer and the web page will dynamically update to show this ongoing chat. 
+
+
+#### Qualtrics
+
+TODO: Add Qualtrics methodology here.
+
+
+#### Additional configurations
+
+If you have pulled Docker `postgres` as the `docker-compose.yml` configuration does, and wish to use this as your backend from a locally serving app or using Docker but without the compose network, you should set the environment variables to:
+
+```
+export DATABASE=POSTGRES
+export DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/interviews"
+```
+
+Alternatively, if you wish to use Redis as your backend, you should set the environment variables to:
+
+```
+export DATABASE=REDIS
+export REDIS_HOST=<YOUR_REDIS_HOST>
+export REDIS_PORT=<YOUR_REDIS_PORT>
+export REDIS_PASSWORD=<YOUR_REDIS_PASSWORD>
+```
+
+And finally, if you wish to AWS Dynamo as your backend from a non-serverless set-up, you should configure your AWS credentials in your environment and pass the Dynamo table name to `DATABASE_URL`, e.g.
+
+```
+export DATABASE=DYNAMODB
+export DATABASE_URL=<DYNAMO_TABLE_NAME>
+```
+
+
+### retrieve
+
+The `/retrieve` endpoint/route retrieves a list of specified `session_id`'s or if no specific `session_id`'s are provided, *all* sessions.
+
+The body looks like:
+```
+{
+    "route": "retrieve",
+    "payload": {
+        "sessions": [
+            "TEST-SESSION-123",
+            "TEST-SESSION-456"
+        ]
+    }
+}
+```
+
+which is called in a request as:
+
+```bash
+curl -X POST -d '{"route":"retrieve", "payload": {"sessions": ["TEST-SESSION-123", "TEST-SESSION-456"]}}' http://0.0.0.0:8000/retrieve
+```
+
+or through Python with the above body as follows:
+
+```python
+import requests
+response = requests.post("http://0.0.0.0:8000/retrieve", json=body)
+```
+
+This endpoint/route returns a list of messages, organized by `session_id`, `time`, `role`, and `message`, e.g.
+
+```
+[
+    {'session_id':101, 'time':0, 'role':'interviewer', 'message':'Hello', ...}
+    {'session_id':101, 'time':1, 'role':'respondent', 'message':'World', ...}
+    ...
+]
+```
+
+Similarly, having run your experiments serverless on AWS, you can then download all sessions using the helper Python script `serverless-retrieve.py` which returns the above as a CSV from a given DynamoDB table, e.g.
+
+```bash
+python serverless-retrieve.py --table_name=interview-sessions --output_path=PATH_TO_DATA.csv
+```
+
+
+### transcribe
+
+TODO: Explain user access to this route.
 
 
 ## App Structure
@@ -362,9 +448,5 @@ PostgreSQL backend database integration.
 This file the HTML landing page users see and interact with. *Update the HTML or Javascript to reflect personal taste!*
 
 
-
-## Issues
-- Storing precision in `boto3`, see https://github.com/boto/boto3/issues/665
-- Fix spare algorithm in `app.ini`
 
 

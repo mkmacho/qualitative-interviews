@@ -33,7 +33,7 @@ wheels/
 template-local.yaml
 
 ## Application 
-*report*
+*report*.html
 .dbdata
 *.csv
 
