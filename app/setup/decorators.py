@@ -3,8 +3,6 @@ from functools import wraps
 from flask import make_response, jsonify, request
 import time
 import traceback as tb
-from jsonschema import validate 
-from setup.schema_validators import API_SCHEMAS
 from setup.log import Logger
 from parameters import WHITELISTED_DOMAINS
 
@@ -28,44 +26,6 @@ def wrap_flask_errors():
 		)} for error_code, error in default_exceptions.items()
 	}
 
-def allowed_domains():
-	""" Only allow pre-defined domains to access. """
-	def decorator(f):
-		@wraps(f)
-		def decorated(*args, **kwargs):
-			domain = request.headers.get("origin", "")
-			if not domain in WHITELISTED_DOMAINS:
-				return make_response(
-					jsonify({
-						"message":"Invalid domain: origin '{0}' is not allowed.",
-						"http_code":401
-					}), 401
-				)
-			return f(*args, **kwargs)
-		return decorated
-	return decorator
-
-def validate_json(endpoint:str="INTERVIEW"):
-	""" Validate incoming request using JSON Schema. """
-	def decorator(f):
-		@wraps(f)
-		def decorated(*args, **kwargs):
-			try:
-				payload = request.get_json(force=True, silent=True) or {}
-				endpoint_schema = '{0}_{1}'.format(endpoint, request.method)
-				validate(payload, API_SCHEMAS[endpoint_schema])
-			except Exception as e:
-				return make_response(
-					jsonify({
-						"message":str(e).split("\n")[0],
-						'type':type(e).__name__,
-						'tb':tb.format_exc()
-					}), 400
-				)
-			return f(*args, **kwargs)
-		return decorated
-	return decorator
-
 def response_log(response, status, start_time, key="info"):
 	""" Log outgoing response. Useful for debugging/monitoring. """
 	logger.log(key=key, message={
@@ -88,7 +48,7 @@ def handle_500(f):
 			http_code = getattr(e, "http_code", None) or getattr(e, "code", 500)
 			message = str(e) or getattr(e, "message", "Service failed")
 			meta = {"type":type(e).__name__,"tb":tb.format_exc(),"str":message}
-			# response_log(meta, http_code, start_time, key="error")
+			response_log(meta, http_code, start_time, key="error")
 			response = make_response(jsonify(meta), http_code)
 		return response
 	return decorated

@@ -60,7 +60,7 @@ pip install -r flask_config/requirements.txt
 export DATABASE_URL=postgresql://postgres:postgres@0.0.0.0:5432/interviews
 ```
 
-Finally, we are ready to start serving the application by simply running:
+Now we are ready to start serving the application by simply running:
 
 ```bash
 python app/app.py
@@ -113,9 +113,23 @@ Your remote machine will now forward requests to port 8000 onto port 80 on which
 
 ### Serverless
 
-Finally, to run the application serverless on AWS you will need to create an AWS account if you do not yet have one and download (public and secret) access keys. With these command line interface keys, simply run `./serverless-setup.sh <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION>` which will configure your command line AWS credentials, create an AWS storage bucket where build template will be stored, and create an AWS Dynamo database table to persistently store interviews sessions (in the Cloud). This has to be run just once!
+To run the application serverless on AWS you will need to create an AWS account if you do not yet have one and download (public and secret) access keys. With these command line interface keys, simply run 
 
-Then, run `./serverless-deploy.sh` which will again take advantage of your environment stored OpenAI key to deploy the Lambda function and expose a public endpoint for you to make requests to!
+```bash
+./serverless-setup.sh <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION>`
+```
+
+which will configure your command line AWS credentials, create an AWS storage bucket where build template will be stored, and create an AWS Dynamo database table to persistently store interviews sessions (in the Cloud). This has to be run just once!
+
+Then, run 
+
+```bash 
+./serverless-deploy.sh` 
+```
+
+which will again take advantage of your environment-stored OpenAI key to deploy the Lambda function with OpenAI access and expose a public endpoint for you to make requests to!
+
+Note that there is no endpoint suffix for this serverless function so requests will go straight to the endpoint, e.g. `https://<SOME_AWS_ID>.execute-api.<AWS_REGION>.amazonaws.com/Prod/`.
 
 
 ### Customization
@@ -222,66 +236,46 @@ A sample of this template for *STOCK_MARKET* interviews is displayed here:
 
 ## API
 
-The main API `\next` is to continue (or begin, if not started) an interview. This is done by making an HTTP POST request with the the key-value pair `route`:`next` and interview type `interview_id`, session `session_id`, and (if not the first request) the respondent's message (`user_message`) in the `payload` sub-object.  
+The main API `\next` is to continue (or begin, if not started) an interview. This is done by making an HTTP POST request with the following body:
 
-For example, given an interview parameter ID `interview_id == 'STOCK_MARKET'` and the (unique) session ID of the interview, e.g. `session_id == 'TEST_SESSION'`, we can make a request to the host and port our application is serving on plus these keys to locally test the application interface: in this case just opening `http://0.0.0.0:8000/STOCK_MARKET/TEST_SESSION` on any browser. The web page will show you the beginning question of the interview, as specified in the parameters corresponding to the `parameters_id` you supplied, and prompt the user to answer this question. Each subsequent response by the user will be processed by the 'AI-interviewer' and the web page will dynamically update to show this ongoing chat. Alternatively, you make POST calls mimcking production requests through the command line (e.g. `curl`), Postman, or Python (e.g. `requests` library). 
+```
+{
+    "route": "next",
+    "payload": {
+        "user_message": "USER_RESPONSE_TO_PRIOR_INTERVIEW_QUESTION",
+        "session_id": "UNIQUE_INTERVIEW_SESSION_ID",
+        "interview_id": "SET_OF_INTERVIEW_GUIDELINES"
+    }
+}
+```
 
+where the `route` key tells the application to return the `next` interview question, the `user_message` provdies the prior response (*if not the first request*) on which to build, the `interview_id` informs how to guide the interview at a high-level, and the `session_id` identifies the interview session.
 
+For example, we can test this API localy using `curl` at the `http://0.0.0.0:8000/next` URL:
 
-### Testing 
+```bash
+curl -X POST -d '{"route":"next", "payload": {"session_id": "TEST-SESSION-123", "interview_id": "STOCK_MARKET", "user_message":"I dont have disposable income to invest"} }' http://0.0.0.0:8000/next
+```
 
-You can test the `/next` endpoint through Python as follows:
+where you can replace the URL with the host, port, endpoint URL exposed on your remote server or through AWS serverless.
+
+You can also test the `/next` endpoint through Python with the above body as follows:
 
 ```python
 import requests
-response = requests.post("http://0.0.0.0:8000/next", headers=headers, json=payload)
+response = requests.post("http://0.0.0.0:8000/next", json=body)
 ```
 
-Example headers:
-```
-{
-    "origin":"http://0.0.0.0:8000"
-}
-```
+or similarly through [Postman](https://www.postman.com/api-platform/api-testing/).
 
-Example starting payload:
-```
-{
-    "user_message": "I can't afford it and the stock market is rigged.",
-    "session_id": "TEST_SESSION",
-    "interview_id": "STOCK_MARKET"
-}
-```
 
-This will return, if successful, a JSON with a `message` field that contains the next directive (as well as the `session_id`):
+### Interface
 
-Example return:
-```
-{
-    'message': 'Could you elaborate on what you mean by the stock market being rigged? What specific aspects or experiences lead you to feel this way?',
-    'session_id': 'TEST_SESSION'
-}
-```
+We can make additionally test the application interface non-programmatically when built using Flask locally or on a remote server.
 
-Example follow-up payload:
+Given the host and host port our application is serving up, plus the previously specified `interview_id` and a unique `session_id` we can simply open up a browser to this URL (making a GET request to begin the interview) and walk through an interview.
 
-```
-{
-    "user_message": "People like me never get ahead, only the super rich and big trading firms win.  I don't want to be swindled.",
-    "session_id": "TEST_SESSION",
-    "interview_id": "STOCK_MARKET"
-}
-```
-
-Example follow-up response:
-```
-{
-    'message': 'What specific events or information have you come across that reinforce your belief that the stock market primarily benefits the wealthy and large trading firms?',
-    'session_id': 'TEST_SESSION'
-}
-```
-
-And et cetera.
+For example, having exposed local "http://0.0.0.0:8000/", we can navigate to `http://0.0.0.0:8000/STOCK_MARKET/TEST-SESSION-123` on your browser of choice. This will open a web page displaying the `interview_id`-specified first question of the interview (as specified in the `parameters.py` file) and prompt the user to answer this question. Each subsequent response by the user will be processed by the AI-interviewer and the web page will dynamically update to show this ongoing chat. 
 
 
 ## App Structure
@@ -289,17 +283,23 @@ And et cetera.
 ```
 └── app/
     ├── app.py
-    ├── tests.py
-    ├── log.py
-    ├── decorators.py
-    ├── schema_validators.py
     ├── parameters.py
+    ├── lambda.py
+    ├── requirements.py
+    ├── tests.py
     ├── core/    
     ├───── logic.py
     ├───── agent.py
-    ├───── database.py
     ├───── manager.py
-    ├───── auxiliary.py
+    ├───── auxiliary.py    
+    ├── database/    
+    ├───── manager.py
+    ├───── postgres.py
+    ├───── dynamo.py
+    ├───── redis.py
+    ├── setup/    
+    ├───── decorators.py
+    ├───── log.py
     ├── templates/    
     ├───── chat.html    
 ```
@@ -313,17 +313,17 @@ All app API calls set up here.
 
 All API tests live here.
 
-### decorators.py
-
-All API decorators live here. 
-
-### schema_validators.py
-
-Validated incoming JSON schema as per [JSON Schema](http://json-schema.org/documentation.html).
-
 ### parameters.py
 
 Contains the interview-specific guidelines and parameters. *Update or create your own LLM prompts here!*
+
+### lambda.py
+
+AWS Lambda interface lives here.
+
+### requirements.txt
+
+AWS Lambda requirements live here.
 
 ### core/logic.py
 
@@ -333,10 +333,6 @@ Endpoint responses are processed here.
 
 AI-interviewer (GPT integration) lives here.
 
-### core/database.py
-
-The Redis data store integration live here.
-
 ### core/manager.py
 
 The interview manager processes run through here.
@@ -345,6 +341,22 @@ The interview manager processes run through here.
 
 This file contains additional functions useful to the core logic.
 
+### database/manager.py
+
+Backend is routed through here to PostgreSQL, Dynamo, or Redis as currently supported.
+
+### core/dynamo.py
+
+DynamoDB backend database integration.
+
+### core/redis.py
+
+Redis backend database integration.
+
+### core/postgres.py
+
+PostgreSQL backend database integration.
+
 ### templates/html.py
 
 This file the HTML landing page users see and interact with. *Update the HTML or Javascript to reflect personal taste!*
@@ -352,10 +364,7 @@ This file the HTML landing page users see and interact with. *Update the HTML or
 
 
 ## Issues
-- Storing floats in `boto3`, see https://github.com/boto/boto3/issues/665
+- Storing precision in `boto3`, see https://github.com/boto/boto3/issues/665
 - Fix spare algorithm in `app.ini`
-
-## Notes
-- Can scan DynamoDB using `aws dynamodb scan --table-name <TABLE_NAME>`
 
 

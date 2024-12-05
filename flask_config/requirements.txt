@@ -2,7 +2,6 @@ Flask==3.0.3
 uWSGI==2.0.27			
 openai==1.55.3
 psycopg2-binary==2.9.10 	# For Postgres backend
-jsonschema==4.23.0			# For request validation
 redis==5.2.0				# For Redis backend
 boto3==1.35.71				# For Dynamo backend
 pandas==2.2.3				# For sessions CSV logging
