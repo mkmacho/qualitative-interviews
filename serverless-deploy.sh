@@ -2,12 +2,22 @@
 
 echo "----------------------------------- IMPORTANT NOTES: --------------------------------------"
 echo "This file deploys your application, requiring your OpenAI API key set as environment variable."
-echo
-echo "You can modify the default values of the AWS S3 bucket and Dynamo database that"
-echo "this script will generate by setting 'S3_BUCKET' and 'DYNAMO_TABLE' environment variables"
-echo "e.g. running 'export S3_BUCKET=BUCKET' and then running this script."
+echo "Make sure that environment S3_BUCKET and (optionally) DYNAMO_TABLE matches those during setup."
 echo "-------------------------------------------------------------------------------------------"
 echo 
+
+BUCKET_NAME=${S3_BUCKET:-${S3_BUCKET}}
+OPENAI_API_KEY=${OPENAI_API_KEY}
+TABLE_NAME=${DYNAMO_TABLE:-'interview-sessions'}
+
+if [ -z "$BUCKET_NAME" ]
+then
+    echo "Error: S3_BUCKET cannot be empty and must match that used during setup!"; echo; exit
+fi
+if [ -z "$OPENAI_API_KEY" ]
+then
+    echo "Error: OPENAI_API_KEY cannot be empty!"; echo; exit
+fi
 
 echo; echo "Building application including local changes..."
 sam build \
@@ -15,12 +25,8 @@ sam build \
 	--use-container \
 	--no-cached
 
-BUCKET_NAME=${S3_BUCKET:-'serverless-interviews-bucket'}
-TABLE_NAME=${DYNAMO_TABLE:-'INTERVIEWS'}
 
-echo "Deploying using OpenAI key: '${OPENAI_API_KEY}'"
-
-echo; echo "Deploying to cloud using provided OpenAI API Key, S3 bucket '$BUCKET_NAME', and Dynamo table '$TABLE_NAME'" 
+echo; echo "Deploying to cloud using provided OpenAI API Key, S3 bucket, and Dynamo table" 
 sam deploy \
 	--parameter-overrides OpenAIAPIKey=${OPENAI_API_KEY} Port=${PORT:-8000} TableName=$TABLE_NAME \
 	--no-confirm-changeset \

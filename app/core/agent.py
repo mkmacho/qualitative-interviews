@@ -2,9 +2,10 @@ import logging
 from core.auxiliary import execute_queries, fill_prompt_with_interview_state, chat_to_string
 from io import BytesIO
 from base64 import b64decode
-import os
 
-if os.getenv("APP_ENV", "PROD") == "LOCAL":
+# Patch for Python3.13 runtime
+import sys
+if sys.version.startswith('3.13'):
     import collections
     if not hasattr(collections, 'MutableSet'):
         collections.MutableSet = collections.abc.MutableSet

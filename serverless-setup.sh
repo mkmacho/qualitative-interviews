@@ -2,20 +2,22 @@
 
 echo "----------------------------------- IMPORTANT NOTES: --------------------------------------"
 echo "This file configures AWS in order to build and deploy your application. You should run:"
-echo "    $0 <AWS PUBLIC ACCESS KEY> <AWS SECRET ACCESS KEY> <AWS REGION>"; 
+echo "    $0 <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION> <S3_BUCKET>"; 
 echo
-echo "Or if you prefer, modify this file directly setting the key variables to the AWS access "
-echo "keys you generated. Then, run without arguments the script: "; echo "    $0    "; 
+echo "Or if you prefer, export those variables as environment variables or even modify this file "
+echo "directly defining the appropriate variables with the keys you generated and chosen bucket name"
+echo "Then, run without arguments the script: "; echo "    $0    "; 
 echo 
-echo "Finally, you can modify the default values of the AWS S3 bucket and Dynamo database that"
-echo "this script will generate by setting 'S3_BUCKET' and 'DYNAMO_TABLE' environment variables"
-echo "e.g. running 'export S3_BUCKET=BUCKET' and then running this script."
+echo "Note: if a 'BucketAlreadyOwnedByYou' error arises, ignore it: it means you are running this"
+echo "script attempting to create a bucket that already exists. This is not a problem. "
+echo "Similarly, if 'ResourceInUseException' arises creating the Dynamo table, you can ignore it."
 echo "-------------------------------------------------------------------------------------------"
 echo 
 
-AWS_PUBLIC_ACCESS_KEY=$1
-AWS_SECRET_ACCESS_KEY=$2
-AWS_REGION=${3-'eu-north-1'}
+AWS_PUBLIC_ACCESS_KEY=${1:-${AWS_PUBLIC_ACCESS_KEY}}
+AWS_SECRET_ACCESS_KEY=${2:-${AWS_SECRET_ACCESS_KEY}}
+AWS_REGION=${3:-${AWS_REGION}}
+BUCKET_NAME=${S3_BUCKET:-${S3_BUCKET}}
 
 if [ -z "$AWS_PUBLIC_ACCESS_KEY" ]
 then
@@ -25,16 +27,23 @@ if [ -z "$AWS_SECRET_ACCESS_KEY" ]
 then
     echo "Error: AWS_SECRET_ACCESS_KEY cannot be empty!"; echo; exit
 fi
+if [ -z "$AWS_REGION" ]
+then
+    echo "Error: AWS_REGION cannot be empty!"; echo; exit
+fi
+if [ -z "$S3_BUCKET" ]
+then
+    echo "Error: S3_BUCKET cannot be empty!"; echo; exit
+fi
+
 
 # Configure AWS credentials
-echo; echo "Configuring AWS access for '$AWS_REGION'"; echo 
+echo; echo "Configuring AWS access for '$AWS_PUBLIC_ACCESS_KEY' in $AWS_REGION'"; echo 
 aws configure set aws_access_key_id $AWS_PUBLIC_ACCESS_KEY 
 aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
 aws configure set default.region $AWS_REGION
 
-
 # Create AWS S3 bucket where build template will be stored
-BUCKET_NAME=${S3_BUCKET:-'serverless-interviews-bucket-'$(date +"%Y%m%d")}
 echo "Creating S3 bucket '$BUCKET_NAME' where templates will be stored"
 aws s3api create-bucket \
 	--bucket $BUCKET_NAME \
@@ -58,7 +67,7 @@ aws s3api put-bucket-lifecycle-configuration \
 	}'
 
 # Create AWS DynamoDB table to store interviews
-TABLE_NAME=${DYNAMO_TABLE:-'INTERVIEWS'}
+TABLE_NAME=${DYNAMO_TABLE:-'interview-sessions'}
 echo; echo "Creating DynamoDB table '$TABLE_NAME' to store interview sessions"
 aws dynamodb create-table \
 	--table-name $TABLE_NAME \
@@ -70,8 +79,8 @@ aws dynamodb create-table \
 echo
 echo "----------------------------------- IMPORTANT NOTES: --------------------------------------"
 echo "This file needs to be run just once as all future changes will be reflected in re-deployment."
-echo "And if you haved changed the 'TABLE_NAME' variable here, ensure that the same table is "
-echo "referred to during deployment."; echo
-echo "You are now ready to deploy your app running './serverless-deploy.sh <YOUR_OPENAI_API_KEY>'"
+echo "And ensure that the same S3 bucket and Dynamo table is referenced in deployment. "
+echo
+echo "You are now ready to deploy your app running './serverless-deploy.sh' :) "
 echo "-------------------------------------------------------------------------------------------"
 echo
