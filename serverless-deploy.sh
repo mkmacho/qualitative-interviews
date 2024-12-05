@@ -17,6 +17,9 @@ sam build \
 
 BUCKET_NAME=${S3_BUCKET:-'serverless-interviews-bucket'}
 TABLE_NAME=${DYNAMO_TABLE:-'INTERVIEWS'}
+
+echo "Deploying using OpenAI key: '${OPENAI_API_KEY}'"
+
 echo; echo "Deploying to cloud using provided OpenAI API Key, S3 bucket '$BUCKET_NAME', and Dynamo table '$TABLE_NAME'" 
 sam deploy \
 	--parameter-overrides OpenAIAPIKey=${OPENAI_API_KEY} Port=${PORT:-8000} TableName=$TABLE_NAME \
