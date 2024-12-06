@@ -17,6 +17,7 @@ Chopra, Felix and Haaland, Ingar, Conducting Qualitative Interviews with AI (202
   * [Customization](#customization)
 * [API](#api)
 * [App Structure](#app-structure)
+* [Licensing](#licensing)
 
 
 
@@ -448,5 +449,6 @@ PostgreSQL backend database integration.
 This file the HTML landing page users see and interact with. *Update the HTML or Javascript to reflect personal taste!*
 
 
+## Licensing 
 
-
+This code is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). Commercial use, including applications in business or for-profit ventures, is strictly prohibited without prior written permission. For inquiries about commercial licenses, please contact [Felix Chopra](f.chopra@fs.de).
