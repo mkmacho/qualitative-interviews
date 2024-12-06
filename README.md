@@ -1,6 +1,6 @@
 # qualitative-interviews #
 
-Companion codebase for *[Conducting Qualitative Interviews with AI]*(https://dx.doi.org/10.2139/ssrn.4583756). 
+Companion codebase for [*Conducting Qualitative Interviews with AI*](https://dx.doi.org/10.2139/ssrn.4583756). 
 
 Set up your own interview structure and leverage [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs) to probe specified topics, smoothly transition between topics, and gracefully close interviews with respondents. 
 
