@@ -1,13 +1,28 @@
 # qualitative-interviews #
 
-Companion codebase for ["Conducting Qualitative Interviews with AI"](https://dx.doi.org/10.2139/ssrn.4583756). Set up your own interview structure and leverage [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs) to probe specified topics, smoothly transition between topics, and gracefully close interviews with respondents. 
+Companion codebase for *[Conducting Qualitative Interviews with AI]*(https://dx.doi.org/10.2139/ssrn.4583756). 
 
-Suggested citation:
+Set up your own interview structure and leverage [OpenAI's](https://platform.openai.com/docs/overview) GPT large language models (LLMs) to probe specified topics, smoothly transition between topics, and gracefully close interviews with respondents. 
+
+
+This code is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). Commercial use, including applications in business or for-profit ventures, is strictly prohibited without prior written permission. 
+
+Uses and distribution should cite:
+
 ```
 Chopra, Felix and Haaland, Ingar, Conducting Qualitative Interviews with AI (2023). CESifo Working Paper No. 10666, Available at SSRN: https://ssrn.com/abstract=4583756 or http://dx.doi.org/10.2139/ssrn.4583756
 ```
+or use the suggested Bibtex entry:
+```
+@article{choprahaaland2023,
+  title={Conducting Qualitative Interviews with AI},
+  author={Chopra, Felix and Haaland, Ingar},
+  url={https://ssrn.com/abstract=4583756},
+  year={2023}
+}
+```
 
-This code is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). Commercial use, including applications in business or for-profit ventures, is strictly prohibited without prior written permission. For inquiries about commercial licenses, please contact [Felix Chopra](f.chopra@fs.de).
+For inquiries about commercial licenses, please contact [Felix Chopra](f.chopra@fs.de). 
 
 
 
@@ -15,7 +30,7 @@ This code is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/
 * [Usage](#usage)
   * [Requirements](#requirements)
   * [Local](#local)
-  * [Flask](#flask)
+  * [Remote](#flask)
   * [Serverless](#serverless)
   * [Customization](#customization)
 * [API](#api)
@@ -25,61 +40,91 @@ This code is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/
 
 ## Usage
 
-This repository contains code to help you build, customize, test, and run AI interviews [locally](#Local), deploy a containerized [Flask](#Flask) application to any server, or deploy as a [serverless](#Serverless) [Lambda](https://docs.aws.amazon.com/lambda/) Function to Amazon Web Services (AWS).
+This repository contains code to help you build, customize, test, and run AI interviews [locally](#Local), deploy a containerized [Flask](#Flask) application to any server, or deploy as a [serverless](#Serverless) [Lambda](https://docs.aws.amazon.com/lambda/) function to Amazon Web Services (AWS).
 
 
 ### Requirements
 
 The application requires OpenAI API access. You can obtain API keys [here](https://platform.openai.com/). 
 
-You can then need to supply your secret key as an environment variable as follows:
+Then simply supply your secret key as an environment variable as follows:
 
 ```bash
 export OPENAI_API_KEY='<YOUR_OPENAI_API_KEY>'
 ```
 
-which will now be supplied to the application automatically!
+which will be passed to the application automatically!
 
 
 ### Local
 
-To quickly run the application on your local machine, where it will be easy to implement changes to the interview guidelines and test the results, follow these instructions.
+To quickly build and host the application locally, where it will be easy to implement changes to the interview guidelines and test the results, follow these instructions.
 
-We advise you to first create a virtual environment so as to install necessary packages in a clean environment, guaranteed of no clashing dependencies.
+You will need Python---Version 3.12 is suggested as testing has been performed on this distribution---which you can install [here](https://www.python.org/downloads/). Pip will also need to be installed.
+
+
+#### MacOS
+
+We advise you to first create a virtual environment---here named `my-test-env`---so as to install necessary packages in a clean environment, guaranteeing no clashing dependencies.
 
 ```bash
- python3 -m venv my-test-env
+ python -m venv my-test-env
  cd my-test-env
  source ./bin/activate
 ```
 
-Then clone this project from Github, or if you have already cloned, activate a virtual environment. Now, install the necessary packages defined in the repository's `requirements.txt` file with `pip` and export the default local PostgreSQL database:
+Then clone this project from Github, or if you have already cloned, move into the project directory. Now, install the necessary packages defined in the repository's `requirements.txt` file within the `flask_config` with `pip`.
 
 ```bash
 git clone https://github.com/mkmacho/qualitative-interviews.git
 cd qualitative-interviews
 
-pip install -r flask_config/requirements.txt
-
-export DATABASE_URL=postgresql://postgres:postgres@0.0.0.0:5432/interviews
+pip install -r ./flask_config/requirements.txt
 ```
 
-Now we are ready to start serving the application by simply running:
+To store interview sessions, you can use AWS DynamoDB, PostgreSQL, Redis, or any other database---even writing to file---you wish. However, Dynamo, Postgres, and Redis are natively supported. 
+
+With AWS, [create your table](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SettingUp.html) and run: 
+
+```bash
+export DATABASE=DYNAMODB
+export DATABASE_URL=<DYNAMO_TABLE>
+```
+
+With Postgres create your database and run:
+
+```bash
+export DATABASE=POSTGRES
+export DATABASE_URL=postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@0.0.0.0:5432/<POSTGRES_DB>
+```
+
+And with Redis, create your database and run:
+
+```bash
+export DATABASE=REDIS
+export REDIS_HOST=<REDIS_HOST>
+export REDIS_PORT=<REDIS_PORT>
+export REDIS_PASSWORD=<REDIS_PASSWORD>
+```
+
+Now we are ready to start serving the Flask application by simply running:
 
 ```bash
 python app/app.py
 ```
 
-This starts up our Flask web application in Python that run with [uWSGI and Nginx](https://flask.palletsprojects.com/en/stable/deploying/uwsgi/). 
-
-As you can see in `app.py`, we are listening on port 8000 so you can now make requests to your local host at *http://0.0.0.0:8000/*!
+As you can see in `app.py`, we are listening on port 8000 so you can now make requests to your local host (e.g. `localhost`, `0.0.0.0`, or `127.0.0.1` at *http://0.0.0.0:8000/*!
 
 
-### Docker
+#### Windows
 
-The simplest way to then run the application is via [Docker](https://www.docker.com/products/docker-desktop/). You can easily build a Docker image containing only the necessary packages in a contained environment -- from whatever operating system!
+TODO: Confirm `powershell` syntax.
 
-#### Build
+
+#### Docker
+
+The simplest way to then run the application---locally or remotely---is through a [Docker](https://www.docker.com/products/docker-desktop/) container. You can easily build a Docker image containing only the necessary packages in a contained environment from whatever operating system!
+
 
 To *build* a `qualitative-interviews` container, first clone the project:
 
@@ -94,17 +139,31 @@ Then build and run a container using the provided `Dockerfile` and the template 
 docker compose up --build --detach
 ```
 
-Note that the `--build` option builds the image locally from the `Dockerfile`, while removing the `build` option will *pull* the image from DockerHub. The `--detach` option runs the containers in the background. 
+Note that the `--build` option builds the image locally from the `Dockerfile`, while removing the `build` option will *pull* the image from remote DockerHub. The `--detach` option runs the containers in the background. 
 
 Just like that, you can now make requests to your local host listening (by default) port 8000, e.g. *http://0.0.0.0:8000/*.
 
 Note that you can stop and remove containers and networks in the compose file using `docker compose down`.
 
-#### Deploy
+#### Additional configurations
+
+If you have pulled Docker `postgres` as the `docker-compose.yml` configuration does, rather than set it up manually, and wish to use this as your backend from a locally serving app (or using Docker but without the compose network), you should set the environment variables to:
+
+```bash
+export DATABASE=POSTGRES
+export DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/interviews"
+```
+
+
+### Remote 
+
+To serve the application in a production environment, we advise against the `werkzeug` development server which is run using `app/app.py`. Instead, use [uWSGI and Nginx](https://flask.palletsprojects.com/en/stable/deploying/uwsgi/) with Flask, with suggested configurations stored in `flask_config`.
+
+#### Docker 
 
 If you want to deploy the Flask application remotely, Docker makes that easy too!
 
-From your remote host make sure Docker is [installed](https://docs.docker.com/engine/install/ubuntu/) and then copy the `docker-compose` file. Then, again, we can simply run from the command line:
+From your remote host make sure Docker is [installed](https://docs.docker.com/engine/install/ubuntu/) and then copy the `docker-compose` file. Then, we can again simply run from the command line:
 
 ```bash
 docker compose up --detach 
@@ -112,12 +171,12 @@ docker compose up --detach
 
 making use of the remote DockerHub image builds which we mentioned previously. 
 
-Your remote machine will now forward requests to port 8000 onto port 80 on which the Docker container is listening, thereby processing remote requests. 
+Your remote machine will now forward requests to port 8000 onto port 80 on which the Docker container is listening, thereby processing requests. 
 
 
 ### Serverless
 
-To run the application serverless on AWS you will need to create an AWS account if you do not yet have one and download (public and secret) access keys. With these command line interface keys, simply run 
+To run the application serverless on AWS you will need to create an AWS account if you do not yet have one, and download (public and secret) access keys. With these command line interface keys, simply run 
 
 ```bash
 ./serverless-setup.sh <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION>`
@@ -125,10 +184,10 @@ To run the application serverless on AWS you will need to create an AWS account 
 
 which will configure your command line AWS credentials, create an AWS storage bucket where build template will be stored, and create an AWS Dynamo database table to persistently store interviews sessions (in the Cloud). This has to be run just once!
 
-Then, run 
+Then, run: 
 
 ```bash 
-./serverless-deploy.sh` 
+./serverless-deploy.sh 
 ```
 
 which will again take advantage of your environment-stored OpenAI key to deploy the Lambda function with OpenAI access and expose a public endpoint for you to make requests to!
@@ -240,6 +299,8 @@ A sample of this template for *STOCK_MARKET* interviews is displayed here:
 
 ## API
 
+There are three main APIs: `/next`, `/transcribe` and `/retrieve`.
+
 ### next
 
 The main API `\next` is to continue (or begin, if not started) an interview. This is done by making an HTTP POST request with the following body:
@@ -284,35 +345,10 @@ Given the host and host port our application is serving up, plus the previously 
 For example, having exposed local "http://0.0.0.0:8000/", we can navigate to `http://0.0.0.0:8000/STOCK_MARKET/TEST-SESSION-123` on your browser of choice. This will open a web page displaying the `interview_id`-specified first question of the interview (as specified in the `parameters.py` file) and prompt the user to answer this question. Each subsequent response by the user will be processed by the AI-interviewer and the web page will dynamically update to show this ongoing chat. 
 
 
-#### Qualtrics
+### transcribe
 
-TODO: Add Qualtrics methodology here.
+TODO: Explain user access to this route.
 
-
-#### Additional configurations
-
-If you have pulled Docker `postgres` as the `docker-compose.yml` configuration does, and wish to use this as your backend from a locally serving app or using Docker but without the compose network, you should set the environment variables to:
-
-```
-export DATABASE=POSTGRES
-export DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/interviews"
-```
-
-Alternatively, if you wish to use Redis as your backend, you should set the environment variables to:
-
-```
-export DATABASE=REDIS
-export REDIS_HOST=<YOUR_REDIS_HOST>
-export REDIS_PORT=<YOUR_REDIS_PORT>
-export REDIS_PASSWORD=<YOUR_REDIS_PASSWORD>
-```
-
-And finally, if you wish to AWS Dynamo as your backend from a non-serverless set-up, you should configure your AWS credentials in your environment and pass the Dynamo table name to `DATABASE_URL`, e.g.
-
-```
-export DATABASE=DYNAMODB
-export DATABASE_URL=<DYNAMO_TABLE_NAME>
-```
 
 
 ### retrieve
@@ -360,11 +396,6 @@ Similarly, having run your experiments serverless on AWS, you can then download 
 ```bash
 python serverless-retrieve.py --table_name=interview-sessions --output_path=PATH_TO_DATA.csv
 ```
-
-
-### transcribe
-
-TODO: Explain user access to this route.
 
 
 ## App Structure
