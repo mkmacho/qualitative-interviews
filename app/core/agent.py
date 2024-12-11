@@ -58,7 +58,7 @@ class Agent(object):
     def review_answer(self, message:str, interview_state:dict) -> bool:
         """ Moderate answers: Are they off topic or contain harmful content? """
         interview_state['user_message'] = message
-        assert interview_state["chat"][-1]["role"] == "assistant"
+        assert interview_state["chat"][-1]["type"] == "question"
         response = execute_queries(
             self.client.chat.completions.create,
             self.construct_query(['moderator'], interview_state)

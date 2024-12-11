@@ -45,6 +45,13 @@ def delete(session_id:str):
 	logic.delete_interview_session(session_id)
 	return make_response(f"Successfully deleted session '{session_id}'.")
 
+@app.route('/retrieve', methods=['GET'])
+@decorators.handle_500
+def retrieve():
+	""" Retrieve all database-stored sessions. """
+	response = logic.retrieve_sessions()
+	return jsonify(response)
+
 
 if __name__ == "__main__":
 	# Only for debugging while developing!

@@ -36,7 +36,7 @@ class InterviewManager(object):
             'parameters': parameters
         }
         # Add starting interview question to transcript
-        self.add_message(parameters['first_question'], role="assistant")
+        self.add_message(parameters['first_question'], type="question")
         self.update_session()
 
     def resume_session(self):
@@ -68,14 +68,14 @@ class InterviewManager(object):
             return True        
         return False
 
-    def add_message(self, message:str, role:str="user"):
+    def add_message(self, message:str, type:str):
         """ Add to chat transcript. """
         self.data['chat'].append({
-            'role':role, 
+            'order':len(self.data['chat']),
+            'type':type, 
             'content':message,
             'topic_idx':self.data['current_topic_idx'],
             'question_idx':self.data['current_question_idx'],
-            'closing_idx':self.data['current_finish_idx'],
             'time':str(datetime.now()),
             'session_id':self.session_id
         })
@@ -98,7 +98,7 @@ class InterviewManager(object):
 
     def get_current_topic(self) -> int:
         """ Return topic index. """
-        return int(self.data["current_topic_idx"])
+        return min(int(self.data["current_topic_idx"]), len(self.data['parameters']['interview_plan']))
 
     def get_current_topic_question(self) -> int:
         """ Return question index within topic. """
@@ -127,6 +127,10 @@ class InterviewManager(object):
         self.data["current_topic_idx"] += 1
         if self.data['parameters'].get('summary'):
             self.update_summary(summary)
+
+    def update_closing(self):
+        self.data["current_question_idx"] = 99  
+        self.data["current_topic_idx"] = 99
 
     def update_probe(self):
         """ Having probed within topic, simply increment question counter. """ 
