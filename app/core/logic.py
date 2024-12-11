@@ -91,7 +91,7 @@ def next_question(session_id:str, interview_id:str, user_message:str=None) -> di
     Note this happens *after* security checks such that
     flagged messages are *not* added to interview history.
     """
-    interview.add_message(user_message)
+    interview.add_message(user_message, type="answer")
 
 
     ##### CONTINUE INTERVIEW BASED ON WORKFLOW #####
@@ -105,13 +105,14 @@ def next_question(session_id:str, interview_id:str, user_message:str=None) -> di
     # Current question within topic guide
     current_question_idx = interview.get_current_topic_question()
     num_questions = parameters['interview_plan'][current_topic_idx-1]['length']
-    on_last_question = current_question_idx == num_questions
+    on_last_question = current_question_idx >= num_questions
     logging.info(f"On question {current_question_idx}/{num_questions}...")
 
     # Continue in workflow
     if on_last_topic and on_last_question:
         # Close interview with pre-determined closing questions
         next_question = interview.get_final_question()
+        interview.update_closing()
         if not next_question:
             # Exit condition: have already produced last "final" question
             interview.terminate()
@@ -130,7 +131,7 @@ def next_question(session_id:str, interview_id:str, user_message:str=None) -> di
 
     # Update interview with new output
     logging.info(f"Interviewer responded: '{next_question}'")
-    interview.add_message(next_question, role="assistant")
+    interview.add_message(next_question, type="question")
     interview.update_session()
 
     # Optional: Check if next question is flagged by OpenAI's moderation endpoint
