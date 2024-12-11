@@ -14,7 +14,7 @@ class Logger(object):
 			level=getattr(logging, LOG_LEVEL),
 			format="%(asctime)s %(name)-20s %(levelname)-8s %(message)s",
 			encoding='utf-8',
-			handlers=[logging.StreamHandler(), logging.FileHandler('/tmp/app.log')]
+			handlers=[logging.StreamHandler()]
 		)
 		self.logger = logging.getLogger("")
 
