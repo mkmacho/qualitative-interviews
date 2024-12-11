@@ -25,15 +25,15 @@ def chat_to_string(chat:list, topic_idx:int=None) -> str:
         # If desire specific topic's chat history:
         if topic_idx and message['topic_idx'] != topic_idx: 
             continue
-        if message["role"] == "assistant":
+        if message["type"] == "question":
             topic_history += f'Interviewer: "{message['content']}"\n'
-        if message["role"] == "user":
+        if message["type"] == "answer":
             topic_history += f'Interviewee: "{message['content']}"\n'
     return topic_history.strip()
 
 def fill_prompt_with_interview_state(template:str, topics:list, interview_state:dict) -> str:
     """ Fill the prompt template with parameters from current interview. """
-    current_topic_idx = int(interview_state['current_topic_idx'])
+    current_topic_idx = min(int(interview_state['current_topic_idx']), len(topics))
     next_topic_idx = min(current_topic_idx + 1, len(topics))
     current_topic_chat = chat_to_string(interview_state['chat'], current_topic_idx)
     prompt = template.format(
