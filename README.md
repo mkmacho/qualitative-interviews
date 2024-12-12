@@ -54,9 +54,9 @@ The application -- no matter how it is run -- requires OpenAI API access. You ca
 To quickly build and host the application locally, where it will be easy to implement changes to the interview guidelines and test the results, follow these instructions.
 
 
-Note that the default database of PostgreSQL must be installed in order to load the `psycopg2` library in the requirements file. You can install it [here](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads), noting the username, password, and database names you choose (as well as the hostname and port if you change the defaults). These variables you will supply in the format `postgresql://<POSTGRES_USERNAME>:<POSTGRES_PASSWORD>@127.0.0.1:5432/<DATABASE>` to access the database in the application.
+Note that the default database of PostgreSQL must be installed in order to load the `psycopg2` library in the requirements file. You can install it [here](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads), noting the username, password, and database names you choose (as well as the hostname and port if you change the defaults). These variables you will supply in the concatenated string format `"postgresql://<POSTGRES_USERNAME>:<POSTGRES_PASSWORD>@127.0.0.1:5432/<DATABASE>"`. Further details on how to set up the application to access this database, and how to substitute a Cloud-based AWS Dynamo or Redis database in the backend, are specified in the following sections.
 
-If you choose to instead use a AWS Dynamo or Redis database in the backend, simply substitute the appropriate environment variables specified in the following sections.
+Also note that you may need to install C++ library compiler for Postgres installation, e.g. [here](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
 
 
 #### MacOS
