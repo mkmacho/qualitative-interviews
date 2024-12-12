@@ -45,44 +45,58 @@ This repository contains code to help you build, customize, test, and run AI int
 
 ### Requirements
 
-The application requires OpenAI API access. You can obtain API keys [here](https://platform.openai.com/). 
+The application -- no matter how it is run -- requires OpenAI API access. You can obtain API keys [here](https://platform.openai.com/). 
 
-Then simply supply your secret key as an environment variable as follows:
-
-```bash
-export OPENAI_API_KEY='<YOUR_OPENAI_API_KEY>'
-```
-
-which will be passed to the application automatically!
 
 
 ### Local
 
 To quickly build and host the application locally, where it will be easy to implement changes to the interview guidelines and test the results, follow these instructions.
 
-You will need Python---Version 3.12 is suggested as testing has been performed on this distribution---which you can install [here](https://www.python.org/downloads/). Pip will also need to be installed.
+
+Note that the default database of PostgreSQL must be installed in order to load the `psycopg2` library in the requirements file. You can install it [here](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads), noting the username, password, and database names you choose (as well as the hostname and port if you change the defaults). These variables you will supply in the format `postgresql://<POSTGRES_USERNAME>:<POSTGRES_PASSWORD>@127.0.0.1:5432/<DATABASE>` to access the database in the application.
+
+If you choose to instead use a AWS Dynamo or Redis database in the backend, simply substitute the appropriate environment variables specified in the following sections.
 
 
 #### MacOS
 
-We advise you to first create a virtual environment---here named `my-test-env`---so as to install necessary packages in a clean environment, guaranteeing no clashing dependencies.
+You will need Python. We recommend stable version 3.12, as this version has been tested. If your machine does not already have it, you can install Python from [here](https://www.python.org/downloads/macos/). 
+
+
+To begin building, we advise you to first create a virtual environment, e.g. `my-test-env`, and activate it, so as to install necessary packages in a clean environment, guaranteeing no clashing dependencies.
+
+In your command-line terminal run:
 
 ```bash
- python -m venv my-test-env
- cd my-test-env
- source ./bin/activate
+python -m venv my-test-env
+cd my-test-env
+source bin/activate
 ```
 
-Then clone this project from Github, or if you have already cloned, move into the project directory. Now, install the necessary packages defined in the repository's `requirements.txt` file within the `flask_config` with `pip`.
+Then clone this project from Github, or if you have already cloned, move into the project directory. Now, install the necessary packages defined in the repository's `local_requirements.txt` file using `pip`.
 
 ```bash
 git clone https://github.com/mkmacho/qualitative-interviews.git
 cd qualitative-interviews
 
-pip install -r ./flask_config/requirements.txt
+python -m pip install -r local_requirements.txt
 ```
 
-To store interview sessions, you can use AWS DynamoDB, PostgreSQL, Redis, or any other database---even writing to file---you wish. However, Dynamo, Postgres, and Redis are natively supported. 
+Now add your OpenAI API key to the environment:
+
+```bash
+export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+```
+
+Finally, to store interview sessions, you can use PostgreSQL, AWS DynamoDB, Redis, or any other database---even writing to file---you wish. However, Postgres, Dynamo, and Redis are natively supported. 
+
+With Postgres, run the following with your saved Postgres variables:
+
+```bash
+export DATABASE=POSTGRES
+export DATABASE_URL=postgresql://<POSTGRES_USERNAME>:<POSTGRES_PASSWORD>@127.0.0.1:5432/<DATABASE>
+```
 
 With AWS, [create your table](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SettingUp.html) and run: 
 
@@ -91,14 +105,7 @@ export DATABASE=DYNAMODB
 export DATABASE_URL=<DYNAMO_TABLE>
 ```
 
-With Postgres create your database and run:
-
-```bash
-export DATABASE=POSTGRES
-export DATABASE_URL=postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@0.0.0.0:5432/<POSTGRES_DB>
-```
-
-And with Redis, create your database and run:
+And with Redis, create your account and database [here](https://redis.io/try-free/) and run:
 
 ```bash
 export DATABASE=REDIS
@@ -113,12 +120,77 @@ Now we are ready to start serving the Flask application by simply running:
 python app/app.py
 ```
 
-As you can see in `app.py`, we are listening on port 8000 so you can now make requests to your local host (e.g. `localhost`, `0.0.0.0`, or `127.0.0.1` at *http://0.0.0.0:8000/*!
+As you can see in `app.py`, we are listening on port `8000` so you can now make requests to your local host (e.g. `localhost`, `0.0.0.0`, or `127.0.0.1`). 
+
+Running in the command line `curl http://127.0.0.1:8000/` should return text `Running!` to confirm the application is successfully up.
 
 
 #### Windows
 
-TODO: Confirm `powershell` syntax.
+Again, we will need Python. We recommend stable version 3.12, as this version has been tested. If your machine does not already have it, you can install Python from [here](https://www.python.org/downloads/windows/). 
+
+
+To begin building, we advise you to first create a virtual environment, e.g. `my-test-env`, and activate it, so as to install necessary packages in a clean environment, guaranteeing no clashing dependencies. Note that we may have to allow permission to activate the environment.
+
+```powershell
+python -m venv my-test-env
+cd .\my-test-env\
+
+set-executionpolicy RemoteSigned
+.\Scripts\Activate.ps1
+```
+
+Then clone this project from Github, or if you have already cloned, move into the project directory. Now, install the necessary packages defined in the repository's `local_requirements.txt` file using `pip`. Note that if `git` is not installed you can install it using `winget`.
+
+```powershell
+winget install --id Git.Git -e --source winget
+git clone https://github.com/mkmacho/qualitative-interviews.git
+cd .\qualitative-interviews\
+
+python -m pip install -r .\local_requirements.txt
+```
+
+Now add your OpenAI API key to the environment:
+
+```powershell
+$Env:OPENAI_API_KEY = <YOUR_OPENAI_API_KEY>
+```
+
+Finally, to store interview sessions, you can use PostgreSQL, AWS DynamoDB, Redis, or any other database---even writing to file---you wish. However, Postgres, Dynamo, and Redis are natively supported. 
+
+With Postgres, run the following with your saved Postgres variables:
+
+```powershell
+$Env:DATABASE = POSTGRES
+$Env:DATABASE_URL = postgresql://<POSTGRES_USERNAME>:<POSTGRES_PASSWORD>@127.0.0.1:5432/<DATABASE>
+```
+
+With AWS, [create your table](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SettingUp.html) and run: 
+
+```powershell
+$Env:DATABASE = DYNAMODB
+$Env:DATABASE_URL = <DYNAMO_TABLE>
+```
+
+And with Redis, create your account and database [here](https://redis.io/try-free/) and run:
+
+```powershell
+$Env:DATABASE = REDIS
+$Env:REDIS_HOST = <REDIS_HOST>
+$Env:REDIS_PORT = <REDIS_PORT>
+$Env:REDIS_PASSWORD = <REDIS_PASSWORD>
+```
+
+Now we are ready to start serving the Flask application by simply running:
+
+```powershell
+python .\app\app.py
+```
+
+As you can see in `app.py`, we are listening on port `8000` so you can now make requests to your local host (e.g. `127.0.0.1`). 
+
+Running in the command line `curl http://127.0.0.1:8000/` should return text `Running!` to confirm the application is successfully up.
+
 
 
 #### Docker
@@ -139,9 +211,11 @@ Then build and run a container using the provided `Dockerfile` and the template 
 docker compose up --build --detach
 ```
 
-Note that the `--build` option builds the image locally from the `Dockerfile`, while removing the `build` option will *pull* the image from remote DockerHub. The `--detach` option runs the containers in the background. 
+Note that the `--build` option builds the image locally from the `Dockerfile`, while removing the `build` option will *pull* the image from remote [DockerHub](https://hub.docker.com/), namely the `mcamacho10/qualitative-interviews:latest` image.
 
-Just like that, you can now make requests to your local host listening (by default) port 8000, e.g. *http://0.0.0.0:8000/*.
+The `--detach` option runs the containers in the background. 
+
+Just like that, you can now make requests to your local host listening (by default) port 8000, e.g. *http://127.0.0.1:8000/*.
 
 Note that you can stop and remove containers and networks in the compose file using `docker compose down`.
 
@@ -169,7 +243,7 @@ From your remote host make sure Docker is [installed](https://docs.docker.com/en
 docker compose up --detach 
 ```
 
-making use of the remote DockerHub image builds which we mentioned previously. 
+making use of the remote DockerHub image `mcamacho10/qualitative-interviews` builds which we mentioned previously. If you wish to make changes to the application and push changes to the Cloud, you will have to make a (free) Docker account and `push` changes -- then pulling that version from your remote server.
 
 Your remote machine will now forward requests to port 8000 onto port 80 on which the Docker container is listening, thereby processing requests. 
 
@@ -318,10 +392,10 @@ The main API `\next` is to continue (or begin, if not started) an interview. Thi
 
 where the `route` key tells the application to return the `next` interview question, the `user_message` provdies the prior response (*if not the first request*) on which to build, the `interview_id` informs how to guide the interview at a high-level, and the `session_id` identifies the interview session.
 
-For example, we can test this API localy using `curl` at the `http://0.0.0.0:8000/next` URL:
+For example, we can test this API localy using `curl` at the `http://127.0.0.1:8000/next` URL:
 
 ```bash
-curl -X POST -d '{"route":"next", "payload": {"session_id": "TEST-SESSION-123", "interview_id": "STOCK_MARKET", "user_message":"I dont have disposable income to invest"} }' http://0.0.0.0:8000/next
+curl -X POST -d '{"route":"next", "payload": {"session_id": "TEST-SESSION-123", "interview_id": "STOCK_MARKET", "user_message":"I dont have disposable income to invest"} }' http://127.0.0.1:8000/next
 ```
 
 where you can replace the URL with the host, port, endpoint URL exposed on your remote server or through AWS serverless.
@@ -330,7 +404,7 @@ You can also test the `/next` endpoint through Python with the above body as fol
 
 ```python
 import requests
-response = requests.post("http://0.0.0.0:8000/next", json=body)
+response = requests.post("http://127.0.0.1:8000/next", json=body)
 ```
 
 or similarly through [Postman](https://www.postman.com/api-platform/api-testing/).
@@ -342,7 +416,7 @@ We can make additionally test the application interface non-programmatically whe
 
 Given the host and host port our application is serving up, plus the previously specified `interview_id` and a unique `session_id` we can simply open up a browser to this URL (making a GET request to begin the interview) and walk through an interview.
 
-For example, having exposed local "http://0.0.0.0:8000/", we can navigate to `http://0.0.0.0:8000/STOCK_MARKET/TEST-SESSION-123` on your browser of choice. This will open a web page displaying the `interview_id`-specified first question of the interview (as specified in the `parameters.py` file) and prompt the user to answer this question. Each subsequent response by the user will be processed by the AI-interviewer and the web page will dynamically update to show this ongoing chat. 
+For example, having exposed localhost port 8000, we can navigate to `http://127.0.0.1:8000/STOCK_MARKET/TEST-SESSION-123` on your browser of choice. This will open a web page displaying the `interview_id`-specified first question of the interview (as specified in the `parameters.py` file) and prompt the user to answer this question. Each subsequent response by the user will be processed by the AI-interviewer and the web page will dynamically update to show this ongoing chat. 
 
 
 ### transcribe
@@ -371,22 +445,24 @@ The body looks like:
 which is called in a request as:
 
 ```bash
-curl -X POST -d '{"route":"retrieve", "payload": {"sessions": ["TEST-SESSION-123", "TEST-SESSION-456"]}}' http://0.0.0.0:8000/retrieve
+curl -X POST -d '{"route":"retrieve", "payload": {"sessions": ["TEST-SESSION-123", "TEST-SESSION-456"]}}' http://127.0.0.1:8000/retrieve
 ```
 
 or through Python with the above body as follows:
 
 ```python
 import requests
-response = requests.post("http://0.0.0.0:8000/retrieve", json=body)
+response = requests.post("http://127.0.0.1:8000/retrieve", json=body)
 ```
 
 This endpoint/route returns a list of messages, organized by `session_id`, `time`, `role`, and `message`, e.g.
 
 ```
 [
-    {'session_id':101, 'time':0, 'role':'interviewer', 'message':'Hello', ...}
-    {'session_id':101, 'time':1, 'role':'respondent', 'message':'World', ...}
+    {'session_id':101, 'type':'question', 'message':'Hello?', 'order':0, ...},
+    {'session_id':101, 'type':'answer', 'message':'World','order':1, ...},
+    {'session_id':101, 'type':'question', 'message':'Why?','order':2, ...},
+    {'session_id':101, 'type':'answer', 'message':'Because','order':3, ...},
     ...
 ]
 ```
@@ -407,6 +483,7 @@ python serverless-retrieve.py --table_name=interview-sessions --output_path=PATH
     ├── lambda.py
     ├── requirements.py
     ├── tests.py
+    ├── locust.py
     ├── core/    
     ├───── logic.py
     ├───── agent.py
@@ -480,6 +557,10 @@ PostgreSQL backend database integration.
 ### templates/html.py
 
 This file the HTML landing page users see and interact with. *Update the HTML or Javascript to reflect personal taste!*
+
+### Additional directories
+
+Above the app-level structure, we have `aws_config` containing `serverless` configurations, `docker_config` containing `Docker` configurations, and `flask_config` containing `Flask` configurations.
 
 
 
