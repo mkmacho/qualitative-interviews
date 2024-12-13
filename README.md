@@ -253,7 +253,7 @@ Your remote machine will now forward requests to port 8000 onto port 80 on which
 To run the application serverless on AWS you will need to create an AWS account if you do not yet have one, and download (public and secret) access keys. With these command line interface keys, simply run 
 
 ```bash
-./serverless-setup.sh <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION>`
+./serverless-setup.sh <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION> <S3_BUCKET>
 ```
 
 which will configure your command line AWS credentials, create an AWS storage bucket where build template will be stored, and create an AWS Dynamo database table to persistently store interviews sessions (in the Cloud). This has to be run just once!
@@ -261,12 +261,38 @@ which will configure your command line AWS credentials, create an AWS storage bu
 Then, run: 
 
 ```bash 
-./serverless-deploy.sh 
+./serverless-deploy.sh <OPENAI_API_KEY> <S3_BUCKET>
 ```
 
-which will again take advantage of your environment-stored OpenAI key to deploy the Lambda function with OpenAI access and expose a public endpoint for you to make requests to!
+which will deploy the Lambda function with OpenAI access and expose a public endpoint for you to make requests to!
 
-Note that there is no endpoint suffix for this serverless function so requests will go straight to the endpoint, e.g. `https://<SOME_AWS_ID>.execute-api.<AWS_REGION>.amazonaws.com/Prod/`.
+Note that this script will print to stdout:
+```bash
+Key             InterviewApi                                                                                      
+Description     API Gateway endpoint URL for function
+Value           https://<SOME_AWS_ID>.execute-api.<AWS_REGION>.amazonaws.com/Prod/
+```
+
+Save this value, it is the public endpoint for your Lambda function. There is no endpoint suffix for this serverless function so requests will go straight to this URL!
+
+You can assert the function is up and working by making a `curl` call from the command-line as:
+
+```bash
+curl -X POST \
+    -d '{"route":"next", "payload":{"session_id":"test","interview_id":"STOCK_MARKET","user_message":"test"}}' \
+    https://<SOME_AWS_ID>.execute-api.<AWS_REGION>.amazonaws.com/Prod/
+```
+
+which should return:
+
+```bash
+{
+    "session_id": "test", 
+    "interview_id": "STOCK_MARKET", 
+    "message": "I am interested in learning more about why you currently do not own any stocks or stock mutual funds. Can you help me understand the main factors or reasons why you are not participating in the stock market?"
+}
+
+```
 
 
 ### Customization
