@@ -219,6 +219,12 @@ Just like that, you can now make requests to your local host listening (by defau
 
 Note that you can stop and remove containers and networks in the compose file using `docker compose down`.
 
+Finally, note that if you want to make local changes and have them be reflected in your Docker container, you can add to the `app` configuration in your `docker-compose.yml` file:
+```bash
+    volumes:
+      - ./app:/app 
+```
+
 #### Additional configurations
 
 If you have pulled Docker `postgres` as the `docker-compose.yml` configuration does, rather than set it up manually, and wish to use this as your backend from a locally serving app (or using Docker but without the compose network), you should set the environment variables to:

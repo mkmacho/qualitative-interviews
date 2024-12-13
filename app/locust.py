@@ -22,7 +22,7 @@ class Quickstart(HttpUser):
 	@task
 	def test_interview(self):
 		session_id = str(randint(1,100))
-		interview_id = "STOCK_MARKET"
+		interview_id = choice(["STOCK_MARKET", "VOTING"])
 		
 		# Load session
 		r = self.client.get(f"/load/{session_id}")
@@ -40,11 +40,9 @@ class Quickstart(HttpUser):
 
 		# Continue session
 		r = self.client.post("/next", json={
-			"payload": {
-				"session_id": session_id,
-				"interview_id": interview_id,
-				"user_message": choice(sample_messages)
-			}
+			"session_id": session_id,
+			"interview_id": interview_id,
+			"user_message": choice(sample_messages)
 		})
 		if r.status_code != 200:
 			print(f"ERROR {r.status_code}: /next/{session_id} returned: {r.text}")

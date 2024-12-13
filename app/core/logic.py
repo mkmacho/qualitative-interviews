@@ -142,6 +142,6 @@ def next_question(session_id:str, interview_id:str, user_message:str=None) -> di
         if flagged_question:
             interview.terminate(reason="question_flagged")
             interview.update_session()
-            return response | {'message':parameters['end_of_interview_message']}
+            return {'session_id':session_id, 'message':parameters['end_of_interview_message']}
     
     return {'session_id':session_id, 'message':next_question}
