@@ -18,7 +18,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-interviews}
 
   app:
-    image: mcamacho10/qualitative-interviews:latest
+    image: interviews:latest
     depends_on:
       db:
         condition: service_healthy
@@ -29,7 +29,6 @@ services:
       - db
     build:
       context: .
-      dockerfile: docker_config/Dockerfile
     environment:
       - DATABASE=POSTGRES
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-interviews}

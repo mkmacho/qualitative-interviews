@@ -5,8 +5,7 @@ from flask import (
 	render_template, 
 	make_response
 )
-from setup import decorators
-from core import logic
+from core import decorators, logic
 
 app = Flask(__name__)
 app.error_handler_spec[None] = decorators.wrap_flask_errors()

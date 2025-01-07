@@ -1,10 +1,25 @@
 import logging
-from parameters import INTERVIEW_PARAMETERS
+import os
+from parameters import (
+    INTERVIEW_PARAMETERS,
+    DATABASE, DATABASE_URL,
+    OPENAI_API_KEY
+)
 from core.manager import InterviewManager
-from core.agent import Agent
-from database.manager import connect_to_database
+from core.agent import LLMAgent
 
-agent = Agent()
+def connect_to_database():
+    """ Instantiate specific backend database. """
+    if DATABASE == "POSTGRES":
+        from database.postgres import PostgreSQL
+        return PostgreSQL(DATABASE_URL)
+    if DATABASE == "DYNAMODB":
+        from database.dynamo import DynamoDB
+        return DynamoDB(DATABASE_URL)
+    from database.file import FileWriter
+    return FileWriter()
+
+agent = LLMAgent(OPENAI_API_KEY)
 db = connect_to_database()
 
 def load_interview_session(session_id:str) -> dict:
