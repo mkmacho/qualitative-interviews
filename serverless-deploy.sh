@@ -1,13 +1,19 @@
 #!/bin/bash
 
 echo "----------------------------------- IMPORTANT NOTES: --------------------------------------"
-echo "This file deploys your application, requiring your OpenAI API key set as environment variable."
+echo "This file deploys your application. You should run:"
+echo "    $0 <OPENAI_API_KEY> <S3_BUCKET>"; 
+echo
+echo "Or if you prefer, export those variables as environment variables or even modify this file "
+echo "directly defining the appropriate variables with your OpenAI API key and chosen bucket name"
+echo "Then, run without arguments the script: "; echo "    $0    "; 
+
 echo "Make sure that environment S3_BUCKET and (optionally) DYNAMO_TABLE matches those during setup."
 echo "-------------------------------------------------------------------------------------------"
 echo 
 
-BUCKET_NAME=${S3_BUCKET:-${S3_BUCKET}}
-OPENAI_API_KEY=${OPENAI_API_KEY}
+OPENAI_API_KEY=${1:-${OPENAI_API_KEY}}
+BUCKET_NAME=${2:-${S3_BUCKET}}
 TABLE_NAME=${DYNAMO_TABLE:-'interview-sessions'}
 
 if [ -z "$BUCKET_NAME" ]

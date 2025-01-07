@@ -17,7 +17,7 @@ echo
 AWS_PUBLIC_ACCESS_KEY=${1:-${AWS_PUBLIC_ACCESS_KEY}}
 AWS_SECRET_ACCESS_KEY=${2:-${AWS_SECRET_ACCESS_KEY}}
 AWS_REGION=${3:-${AWS_REGION}}
-BUCKET_NAME=${S3_BUCKET:-${S3_BUCKET}}
+BUCKET_NAME=${4:-${S3_BUCKET}}
 
 if [ -z "$AWS_PUBLIC_ACCESS_KEY" ]
 then
@@ -31,7 +31,7 @@ if [ -z "$AWS_REGION" ]
 then
     echo "Error: AWS_REGION cannot be empty!"; echo; exit
 fi
-if [ -z "$S3_BUCKET" ]
+if [ -z "$BUCKET_NAME" ]
 then
     echo "Error: S3_BUCKET cannot be empty!"; echo; exit
 fi

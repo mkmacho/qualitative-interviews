@@ -19,7 +19,7 @@ def resume_interview_session(session_id:str, user_message:str) -> InterviewManag
     """ Return InterviewManager object of existing session. """
     interview = InterviewManager(db, session_id)
     interview.resume_session()
-    logging.info("Generating next question for session '{}' user message '{}'".format(
+    logging.info("Generating next question for session '{}', user message '{}'".format(
         session_id, 
         user_message
     ))   
@@ -37,7 +37,7 @@ def begin_interview_session(session_id:str, interview_id:str) -> dict:
         session_id, 
         parameters['first_question']
     ))
-    return {'session_id':session_id, 'message':parameters['first_question']}
+    return {'session_id':session_id, 'interview_id':interview_id, 'message':parameters['first_question']}
 
 def retrieve_sessions(sessions:list=None) -> dict:
     """ Return specified or all existing interview sessions. """
@@ -45,7 +45,9 @@ def retrieve_sessions(sessions:list=None) -> dict:
 
 def transcribe(**kwargs) -> dict:
     """ Return audio file transcription using OpenAI Whisper API """
-    return {'transcription':agent.transcribe(**kwargs)}
+    transcription = agent.transcribe(**kwargs)
+    logging.info(f"Returning transcription text: '{transcription}'")
+    return {'transcription':transcription}
 
 def next_question(session_id:str, interview_id:str, user_message:str=None) -> dict:
     """
@@ -140,6 +142,6 @@ def next_question(session_id:str, interview_id:str, user_message:str=None) -> di
         if flagged_question:
             interview.terminate(reason="question_flagged")
             interview.update_session()
-            return response | {'message':parameters['end_of_interview_message']}
+            return {'session_id':session_id, 'message':parameters['end_of_interview_message']}
     
     return {'session_id':session_id, 'message':next_question}
