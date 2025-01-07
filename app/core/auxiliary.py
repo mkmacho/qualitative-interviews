@@ -6,17 +6,12 @@ import os
 import json 
 from decimal import Decimal
 
-# Custom JSON Encoder class
 class DecimalEncoder(json.JSONEncoder):
+    """ Custom JSON Encoder class for AWS Decimal handling. """
     def default(self, obj):
         if isinstance(obj, Decimal):
             return str(obj)
         return super().default(obj)
-
-def cleaned(response, task:str):
-    output = response.choices[0].message.content.strip("\n\" '''")
-    logging.debug(f"GPT response: '{output}'")
-    return output if task in ['summary'] else re.sub("[\n'''*]", "", output)
 
 def chat_to_string(chat:list, topic_idx:int=None) -> str:
     """ Convert messages from chat into one string. """
@@ -70,8 +65,9 @@ def execute_queries(query, task_args:dict) -> dict:
         }
         for future in as_completed(futures):
             task = futures[future]
-            suggestions[task] = cleaned(future.result(), task)
+            resp = future.result().choices[0].message.content.strip("\n\" '''")
+            suggestions[task] = resp
 
     logging.info("OpenAI query took {:.2f} seconds".format(time.time() - st))
-    logging.debug(f"OpenAI query returned: {suggestions}")
+    logging.info(f"OpenAI query returned: {suggestions}")
     return suggestions

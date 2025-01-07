@@ -33,13 +33,14 @@ Qualtrics.SurveyEngine.addOnload(function () {
 				mediaRecorder = new MediaRecorder(stream);
 				audioChunks = []; // Reset the audio chunks
 				recordButton.textContent = "Stop recording";
-
+                submitButton.disabled = true;
 				mediaRecorder.start();
 				mediaRecorder.ondataavailable = (event) => {
 					audioChunks.push(event.data);
 				};
 			} catch (err) {
 				alert("Error accessing microphone: " + err.message);
+                submitButton.disabled = false;
 			}
 		} else if (recordButton.textContent === "Stop recording") {
 			// Stop recording
@@ -66,11 +67,13 @@ Qualtrics.SurveyEngine.addOnload(function () {
 								const transcript = data.transcription || "Transcription failed. Please try again.";
 								inputField.value = transcript;
 								recordButton.textContent = "Record response";
+                                submitButton.disabled = false;
 							},
 							error: function (jqXHR, textStatus, errorThrown) {
 								console.error("Error:", errorThrown);
 								alert("Something went wrong with the transcription. Please try again.");
 								recordButton.textContent = "Record response";
+                                submitButton.disabled = false;
 							}
 						});
 					} catch (error) {
@@ -81,6 +84,7 @@ Qualtrics.SurveyEngine.addOnload(function () {
 						// Clean up
 						audioChunks = [];
 						recordButton.disabled = false;
+                        submitButton.disabled = false;
 					}
 				};
 
@@ -187,6 +191,8 @@ Qualtrics.SurveyEngine.addOnload(function () {
             submitButton.disabled = true;
             submitButton.style.backgroundColor = '#ccc';
             submitButton.innerText = "Waiting for reply...";
+            // Also disable the audio record button.
+			recordButton.disabled = true;
 
             // Add user message to the chat area
             var messageContent = document.createElement('div');
@@ -226,11 +232,15 @@ Qualtrics.SurveyEngine.addOnload(function () {
                         next_question = next_question.trim();
                         submitButton.disabled = true;
                         submitButton.innerText = "End of interview";
+                        // Also disable the audio record button.
+                        recordButton.disabled = true;
                     } else {
                         // Interview continues
                         submitButton.disabled = false;
                         submitButton.innerText = "Submit response";
                         submitButton.style.backgroundColor = '#007BFF';
+                        // Re-enable audio record button.
+                        recordButton.disabled = false;
                     }
                     appendChatbotMessage(next_question, chatArea, "response");
                 },
@@ -241,6 +251,8 @@ Qualtrics.SurveyEngine.addOnload(function () {
                     submitButton.disabled = false;
                     submitButton.style.backgroundColor = '#007BFF';
                     submitButton.innerText = "Submit response";
+                    // Also disable the audio record button.
+                    recordButton.disabled = false;
                 }
             });
         }

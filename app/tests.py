@@ -21,12 +21,9 @@ class APITestCase(unittest.TestCase):
 			self.assertEqual(r.status_code, 200)
 			response = client.post('/next', 
 				data=json.dumps({
-					"route":"next",
-					"payload":{
-						"user_message": "I can't afford it and the stock market is rigged.",
-						"interview_id": "STOCK_MARKET",
-						"session_id": "TEST_SESSION"
-					}
+					"user_message": "I can't afford it and the stock market is rigged.",
+					"interview_id": "STOCK_MARKET",
+					"session_id": "TEST_SESSION"
 				}), 
 				content_type='application/json'
 			)
