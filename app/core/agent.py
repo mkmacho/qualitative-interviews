@@ -2,22 +2,13 @@ import logging
 from core.auxiliary import execute_queries, fill_prompt_with_interview_state, chat_to_string
 from io import BytesIO
 from base64 import b64decode
-
-# Patch for Python3.13 runtime
-import sys
-if sys.version.startswith('3.13'):
-    import collections
-    if not hasattr(collections, 'MutableSet'):
-        collections.MutableSet = collections.abc.MutableSet
-        collections.MutableMapping = collections.abc.MutableMapping
-
 from openai import OpenAI
 
 
-class Agent(object):
+class LLMAgent(object):
     """ Class to manage LLM-based agents. """
-    def __init__(self, timeout:int=30, max_retries:int=3):
-        self.client = OpenAI(timeout=timeout, max_retries=max_retries)
+    def __init__(self, api_key, timeout:int=30, max_retries:int=3):
+        self.client = OpenAI(api_key=api_key, timeout=timeout, max_retries=max_retries)
         logging.info("OpenAI client instantiated. Should happen only once!")
 
     def transcribe(self, audio, model:str="whisper-1") -> str:

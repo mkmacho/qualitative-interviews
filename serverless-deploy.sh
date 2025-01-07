@@ -27,7 +27,6 @@ fi
 
 echo; echo "Building application including local changes..."
 sam build \
-	--template aws_config/template.yaml \
 	--use-container \
 	--no-cached
 

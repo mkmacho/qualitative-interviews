@@ -2,7 +2,6 @@ import json
 import logging 
 from psycopg2 import connect, OperationalError
 from psycopg2.extras import RealDictCursor 
-from core.auxiliary import DecimalEncoder
 
 
 class PostgreSQL(object):
@@ -56,7 +55,7 @@ class PostgreSQL(object):
         """
         with connect(self.database_url) as conn:
             with conn.cursor() as cursor:
-                cursor.execute(insert_query, (session_id, json.dumps(data, cls=DecimalEncoder)))
+                cursor.execute(insert_query, (session_id, json.dumps(data)))
         logging.info(f"Session '{session_id}' updated!")
 
     def retrieve_sessions(self, sessions:list=None) -> list:

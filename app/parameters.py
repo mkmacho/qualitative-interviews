@@ -1,12 +1,7 @@
-from decimal import Decimal
+DATABASE = None
+DATABASE_URL = None
+OPENAI_API_KEY = "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"
 
-WHITELISTED_DOMAINS = [
-	"https://nhh.eu.qualtrics.com", 
-	"https://cebi.eu.qualtrics.com",
-	"http://0.0.0.0:8000",
-	"http://127.0.0.1:8000",
-	"http://188.166.37.68:8000"
-]
 
 INTERVIEW_PARAMETERS = {
 	"STOCK_MARKET": {
@@ -99,7 +94,7 @@ INTERVIEW_PARAMETERS = {
 
 				YOUR RESPONSE: Please provide the most suitable next transition question in the interview, without any other discussion, context, or remarks.
 			""",
-			"temperature": Decimal('0.7'),
+			"temperature": '0.7',
 			"model": "gpt-4o",
 			"max_tokens": 300
 		},
@@ -133,7 +128,7 @@ INTERVIEW_PARAMETERS = {
 
 				YOUR RESPONSE: Please provide the most suitable next probing question in the interview, without any other discussion, context, or remarks.
 			""",
-			"temperature": Decimal('0.7'),
+			"temperature": '0.7',
 			"model": "gpt-4o",
 			"max_tokens": 300
 		},
@@ -229,7 +224,7 @@ INTERVIEW_PARAMETERS = {
 
 				YOUR RESPONSE: Please provide the most suitable next transition question in the interview, without any other discussion, context, or remarks.
 			""",
-			"temperature": Decimal('0.7'),
+			"temperature": '0.7',
 			"model": "gpt-4o",
 			"max_tokens": 300
 		},
@@ -263,7 +258,7 @@ INTERVIEW_PARAMETERS = {
 
 				YOUR RESPONSE: Please provide the most suitable next probing question in the interview, without any other discussion, context, or remarks.
 			""",
-			"temperature": Decimal('0.7'),
+			"temperature": '0.7',
 			"model": "gpt-4o",
 			"max_tokens": 300
 		},

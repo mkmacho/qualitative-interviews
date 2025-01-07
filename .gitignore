@@ -35,6 +35,7 @@ template-local.yaml
 ## Application 
 *report*.html
 .dbdata
+data/
 *.csv
 
 ## SAM
