@@ -31,9 +31,7 @@ For inquiries about commercial licenses, please contact [Felix Chopra](f.chopra@
 ### Table of Contents
 * [Option 1: Local testing](#local)
     * [Docker](#docker)
-    * [Linux/MacOS](#macos)
-    * [Windows](#windows)
-    * [Notes on PostgreSQL](#postgresql)
+    * [Manually](#manual)
 * [Option 2: Deploy as Flask app](#flask)
 * [Option 3: Deploy on AWS](#serverless)
 * [Integrating with Qualtircs](#qualtrics)
@@ -43,12 +41,29 @@ For inquiries about commercial licenses, please contact [Felix Chopra](f.chopra@
 
 ## Option 1: Local testing
 
-This option is ideal for testing the app before data collection and making changes to the code or prompts to better fit your research setting. We explain how this is done with (1) Docker, (2) Linux/MacOS and (3) Windows below.
+This option is ideal for testing the app before data collection and making changes to the code or prompts to better fit your research setting. We explain how this is done using Docker as well as manually.
+
+Note that regardless of how you build and test, the application will look for an OpenAI API key in your environment, which can be set as
+```bash
+export OPENAI_API_KEY=MY_OPENAI_API_KEY
+```
+or as a *hard-coded* value which can be set by simply changing line 5 of `parameters.py` from:
+```python
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY_HERE")
+```
+to 
+```python
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "MY_OPENAI_API_KEY")
+```
+or even just
+```python
+OPENAI_API_KEY = "MY_OPENAI_API_KEY"
+```
 
 
 ### Docker
 
-The simplest way to then run the application---locally or remotely---is through a [Docker](https://www.docker.com/products/docker-desktop/) container. You can easily build a Docker image containing only the necessary packages in a contained environment from whatever operating system.
+The cleanest way to then run the application---locally or remotely---is through a [Docker](https://www.docker.com/products/docker-desktop/) container. You can easily build a Docker image containing only the necessary packages in a contained environment from whatever operating system.
 
 **Step 1**: Clone the GitHub repo.
 
@@ -57,38 +72,51 @@ git clone https://github.com/mkmacho/qualitative-interviews.git
 cd qualitative-interviews
 ```
 
-**Step 2**: Then build and run a container using the provided `Dockerfile` and the template `docker-compose` YAML, which will automatically pick up your OpenAI API key from our environment, by running:
+**Step 2a**: Build a Docker image (e.g. `interviews`) and run a container (in the background, if you add the `--detach` flag) listening on the `8000` port using the provided `Dockerfile` by running:
+
+```bash
+docker build --tag interviews .
+docker run --detach --publish 8000:80 interviews
+```
+
+**Step 2b**: Alternatively, build and run using the template `docker-compose` YAML by running:
 
 ```bash
 docker compose up --build --detach
 ```
 
-Note that the `--build` option builds the image locally from the `Dockerfile`. The `--detach` option runs the containers in the background.
+This option allows you to easily use a more sophisticated PostgreSQL database, linking it with the applicaiton container, rather than writing to file --- though this is in no way necessary for local testing.
 
-**Comments**: You can now make requests to your local host listening (by default) port 8000, e.g. *http://127.0.0.1:8000/*. You can stop and remove containers and networks in the compose file using `docker compose down`. Finally, note that if you want to make local changes and have them be reflected in your Docker container, you can add to the `app` configuration in your `docker-compose.yml` file:
+
+You can now make requests to your local host listening on port `8000` (e.g. `localhost:8000`, `0.0.0.0:8000`, or `127.0.0.1:8000`). Running in the command line `curl http://127.0.0.1:8000/` should return text `Running!` to confirm the application is successfully up and running.
+
+
+**Comments**: 
+- By default, this set-up will store sessions by writing to file. You can switch to a PostgreSQL database by changing `parameters.py` such that `DATABASE = "POSTGRES"` and `DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:5432/interviews"`.
+- You can stop (e.g. `docker stop`) and remove (i.e. `docker rm`) containers, or do the same for networks in the compose file (e.g. `docker compose down`). If you want to make local changes and have them be reflected in your Docker container upon restart (e.g. `docker restart` or `docker compose restart`), you can add to the `app` configuration in your `docker-compose.yml` file:
 ```bash
     volumes:
       - ./app:/app 
 ```
-
-Depending on your system, you might also have to set the following environment variables:
+or alternatively run:
 ```bash
-export DATABASE=POSTGRES
-export DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/interviews"
+docker run --detach --publish 8000:80 --volume $(pwd)/app:/app interviews
 ```
 
-### Linux/MacOS
+### Manual
 
-If you decide against installation via Docker, you will need to Python. We recommend stable version 3.12. You can install Python from [here](https://www.python.org/downloads/macos/). 
+If you decide against Docker, you will need to have (or download) Python. We recommend stable version 3.12. You can install Python from [here](https://www.python.org/downloads). 
 
-**Step 1:** create a virtual environment, e.g. `qualitative-interviews`, and activate it, so as to install necessary packages in a clean environment, guaranteeing no clashing dependencies. In your command-line terminal run:
+**Optional Step 0:** Create a virtual environment, e.g. `qualitative-interviews`, and activate it, so as to install necessary packages in a clean environment, guaranteeing no clashing dependencies. In your command-line terminal run:
 
 ```bash
-python -m venv qualitative-interviews
-cd qualitative-interviews
+python -m venv interviews-env
+cd interviews-env
 source bin/activate
 ```
-**Step 2:** Then clone this project from Github and install the necessary packages defined in the repository's `local_requirements.txt` file using `pip`:
+
+**Step 1:** Clone this project from Github and install the necessary packages defined in the repository's `local_requirements.txt` file using `pip`:
+
 ```bash
 git clone https://github.com/mkmacho/qualitative-interviews.git
 cd qualitative-interviews
@@ -96,152 +124,66 @@ cd qualitative-interviews
 python -m pip install -r local_requirements.txt
 ```
 
-**Step 3:** Now add your OpenAI API key to the environment:
+**Step 2:** Now start a *development* (Werkzeug) server to host your application by simply running:
 
-```bash
-export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
-```
-
-**Step 4:** Finally, to store interviews, you can use PostgreSQL, AWS DynamoDB, Redis, or any other database. However, Postgres, Dynamo, and Redis are natively supported. With Postgres, run the following with your saved Postgres variables:
-
-```bash
-export DATABASE=POSTGRES
-export DATABASE_URL=postgresql://<POSTGRES_USERNAME>:<POSTGRES_PASSWORD>@127.0.0.1:5432/<DATABASE>
-```
-
-With AWS, [create your table](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SettingUp.html) and run: 
-
-```bash
-export DATABASE=DYNAMODB
-export DATABASE_URL=<DYNAMO_TABLE>
-```
-
-And with Redis, create your account and database [here](https://redis.io/try-free/) and run:
-
-```bash
-export DATABASE=REDIS
-export REDIS_HOST=<REDIS_HOST>
-export REDIS_PORT=<REDIS_PORT>
-export REDIS_PASSWORD=<REDIS_PASSWORD>
-```
-
-**Step 5:** Now you can run the app as follows:
 ```bash
 python app/app.py
 ```
 
-As you can see in `app.py`, we are listening on port `8000` so you can now make requests to your local host (e.g. `localhost`, `0.0.0.0`, or `127.0.0.1`). Running in the command line `curl http://127.0.0.1:8000/` should return text `Running!` to confirm the application is successfully up.
+As you can see in `app.py`, we are listening on port `8000` so you can now make requests to your local host (e.g. `localhost`, `0.0.0.0`, or `127.0.0.1`). Running in the command line `curl http://127.0.0.1:8000/` should return text `Running!` to confirm the application is successfully up and running.
 
-
-### Windows
-
-If you decide against installation via Docker, you will need to Python. We recommend stable version 3.12. You can install Python from [here](https://www.python.org/downloads/macos/). 
-
-**Step 1:** create a virtual environment, e.g. `qualitative-interviews`, and activate it, so as to install necessary packages in a clean environment, guaranteeing no clashing dependencies. In your command-line terminal run:
-
-```powershell
-python -m venv my-test-env
-cd .\my-test-env\
-
-set-executionpolicy RemoteSigned
-.\Scripts\Activate.ps1
-```
-
-**Step 2:** Then clone this project from Github and install the necessary packages defined in the repository's `local_requirements.txt` file using `pip`. Note that if `git` is not installed you can install it using `winget`.
-
-```powershell
-winget install --id Git.Git -e --source winget
-git clone https://github.com/mkmacho/qualitative-interviews.git
-cd .\qualitative-interviews\
-
-python -m pip install -r .\local_requirements.txt
-```
-
-**Step 3:** Now add your OpenAI API key to the environment:
-
-```powershell
-$Env:OPENAI_API_KEY = <YOUR_OPENAI_API_KEY>
-```
-
-**Step 4:** Finally, to store interviews, you can use PostgreSQL, AWS DynamoDB, Redis, or any other database. However, Postgres, Dynamo, and Redis are natively supported. With Postgres, run the following with your saved Postgres variables:
-
-With Postgres, run the following with your saved Postgres variables:
-
-```powershell
-$Env:DATABASE = POSTGRES
-$Env:DATABASE_URL = postgresql://<POSTGRES_USERNAME>:<POSTGRES_PASSWORD>@127.0.0.1:5432/<DATABASE>
-```
-
-With AWS, [create your table](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SettingUp.html) and run: 
-
-```powershell
-$Env:DATABASE = DYNAMODB
-$Env:DATABASE_URL = <DYNAMO_TABLE>
-```
-
-And with Redis, create your account and database [here](https://redis.io/try-free/) and run:
-
-```powershell
-$Env:DATABASE = REDIS
-$Env:REDIS_HOST = <REDIS_HOST>
-$Env:REDIS_PORT = <REDIS_PORT>
-$Env:REDIS_PASSWORD = <REDIS_PASSWORD>
-```
-
-**Step 5:** Now you can run the app as follows:
-
-```powershell
-python .\app\app.py
-```
-
-As you can see in `app.py`, we are listening on port `8000` so you can now make requests to your local host (e.g. `127.0.0.1`). Running in the command line `curl http://127.0.0.1:8000/` should return text `Running!` to confirm the application is successfully up.
-
-
-
-### Notes on PostgreSQL
-
-The default database of PostgreSQL must be installed in order to load the `psycopg2` library in the requirements file. You can install it [here](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads), noting the username, password, and database names you choose (as well as the hostname and port if you change the defaults). These variables you will supply in the concatenated string format `"postgresql://<POSTGRES_USERNAME>:<POSTGRES_PASSWORD>@127.0.0.1:5432/<DATABASE>"`. Further details on how to set up the application to access this database are provided above. Also note that you may need to install C++ library compiler for Postgres installation, e.g. [here](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
-
-
-
+**Comments**: 
+- By default, this set-up will store sessions by writing to file. 
+- Changes to your local code will automatically restart the server, reflecting your changes. You can stop the server by entering `control-C` on your command line.
 
 
 ## Option 2: Deploy as Flask app 
 
-This option is for when you are ready to collect data and want to deploy your application on your own server. We recommend deploying with Docker.
+This option is for when you are ready to collect data and want to deploy your application on a production server. The benefit of this option is that you can manage the server and all aspects of your code, logs, and application service directly. 
 
-**Step 1:** On your remote server, make sure Docker is [installed](https://docs.docker.com/engine/install/ubuntu/) and then copy the `docker-compose` file from our repository.
+**Step 0:** On your remote server, make sure Docker is [installed](https://docs.docker.com/engine/install/).
 
-**Step 2:** Run the following command from your terminal:
+**Step 1a:** Using e.g. `scp` copy your current codebase, including changes you have made, to your remote server.
+
+Once you have your codebase on your remote server, you can build a Docker image just as you did locally, e.g.
+```bash
+docker build -t interviews .
+```
+
+**Step 1b:** Alternatively, push your local changes to Docker Cloud and pull a copy onto your remote server.
+
+To do this, make a free Docker [account](https://app.docker.com/signup) and then `push` your local codebase to Dockerhub. Then from your remote server, `pull` that image from the Cloud. This way you do not have to manually copy any files to your server.
+
+**Step 2:** Now you can `run` a container from the image (e.g. `interviews`) you just built or pulled using:
 
 ```bash
-docker compose up --detach 
+docker run --detach --publish 8000:80 interviews
 ```
+
 Your remote machine will now forward requests to port 8000 onto port 80 on which the Docker container is listening, thereby processing requests. 
-
-**Comments:** This makes use of the remote DockerHub image `mcamacho10/qualitative-interviews`. If you wish to make changes to the application and push changes to the Cloud, you can make a free Docker account and `push` changes -- then pulling that version from your remote server.
-
 
 
 ## Option 3: Deploy on AWS
 
-This option is for when you are ready to collect data and want to deploy your application on your own server. The benefit of this option is that AWS manages all server-related aspects at a low price. We have made good experience with this setup.
+This option is for when you are ready to collect data and want to run your application *without a dedicated server*. The benefit of this option is that AWS abstracts the deployment and management details at a low price. We have had good experiences with this setup.
 
 **Step 1:** To run the application serverless on AWS you will need to create an AWS account if you do not yet have one, and download (public and secret) access keys.
 
-**Step 2:** With the  command line interface keys, simply run 
+**Step 2:** With your command line interface keys, simply run: 
 
 ```bash
 ./serverless-setup.sh <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION> <S3_BUCKET>
 ```
 
-which will configure your command line AWS credentials, create an AWS storage bucket where build template will be stored, and create an AWS Dynamo database table to persistently store interviews sessions (in the Cloud). This has to be run just once!
+supplying your keys, your region (e.g. `eu-north-1`), and your chosen bucket name (e.g. `my-bucket`) which will configure your command line AWS credentials, create an AWS storage bucket where build template will be stored, and create an AWS Dynamo database table (by default named `interview-sessions`) to persistently store interviews sessions (in the Cloud). This has to be run just once!
 
-**Step 3:** Then deploy the Lambda function with OpenAI access and expose a public endpoint for you to make requests: 
+**Step 3:** Deploy the Lambda function with OpenAI access and expose a public endpoint to which you can make requests: 
 
 ```bash 
 ./serverless-deploy.sh <OPENAI_API_KEY> <S3_BUCKET>
 ```
+
+supplying your OpenAI API key and the same AWS S3 bucket name provided above (e.g. `my-bucket`).
 
 Note that this script will return the following information:
 ```bash
@@ -252,7 +194,8 @@ Value           https://<SOME_AWS_ID>.execute-api.<AWS_REGION>.amazonaws.com/Pro
 
 Save this value.  It is the public endpoint for your Lambda function. There is no endpoint suffix for this serverless function so requests will go straight to this URL.
 
-**Comments:** You can assert the function is up and working by making a `curl` call from the command-line:
+**Comments:** 
+- You can assert the function is up and working by making a `curl` call from the command-line, e.g.
 ```bash
 curl -X POST \
     -d '{"route":"next", "payload":{"session_id":"test","interview_id":"STOCK_MARKET","user_message":"test"}}' \
@@ -260,7 +203,7 @@ curl -X POST \
 ```
 
 
-## Integrating with Qualtircs
+## Integrating with Qualtrics
 
 If you have deployed your app, you can integrate it with your Qualtrics survey. 
 
@@ -273,25 +216,7 @@ If you have deployed your app, you can integrate it with your Qualtrics survey.
 
 ## Parameters of the app
 
-To customize the structure of the interviews (e.g. the topics covered, the duration, the LLM prompts, etc.) simply edit the `parameters.py` file. Currently, in `parameters.py` you will see a few elements in `INTERVIEW_PARAMETERS`: *STOCK_MARKET* and *VOTING*. *STOCK_MARKET* contains the parameters and prompts from our paper. *VOTING* is just a placeholder. You can add your own interview parameters by creating a new entry in this dictionary file. We explain the key parameters below:
-
-* *first_question*: the opening question for the interview
-* *interview_plan*: the list of subtopics to be covered in the interview (in the `topic` variable) and the number of questions per topic (`length`)
-* *closing_questions*: a (fixed) list of questions/comments (if any) with which to end the interview
-* *end_of_interview_message*: the message to display at the end of the interview
-* *termination_message*: the message to display in the event the user responds to an ended interview
-* *flagged_message*: the message to display to flagged messages
-* *off_topic_message*: the message to display if the user's response is deemed off-topic
-* *moderate_answers*: (True) whether to active the moderation agent for incoming answers from the respondent
-* *moderate_questions*: (True) whether to check outgoing questions with OpenAI's moderation endpoint
-* *summarize*: (True) whether to active the summarization agent
-* *summary*: Prompt for the summarization agent
-* *transition*: Prompt for the transition agent 
-* *probe*: Prompt for the probing agent
-* *moderator*: Prompt for the moderator agent
-
-For the prompts, you can also specify a maximum length (`max_tokens`) for the desired response, a `temperature` for the LLM, and a `model` for the LLM to use. Note that the prompt may reference the current state of the interview or the defined interview structure through the use of curly bracket variables (e.g. `{topics}` will be populated by the defined `interview_plan`).
-
+To customize the structure of the interviews (e.g. the topics covered, the duration, the LLM prompts, etc.) simply edit the `parameters.py` file. Detailed explanations of the variables can be found direclty in the file.
 
 
 ## How to interact with the app

@@ -1,10 +1,44 @@
 import os
 
-DATABASE = os.getenv("DATABASE") 			# Defaults to None (for AWS, leave as is)
-DATABASE_URL = os.getenv("DATABASE_URL") 	# Defaults to None (for AWS, leave as is)
+# Either export environment variable OPENAI_API_KEY or modify line 5
+# directly, e.g. changing to `OPENAI_API_KEY = "MY_OPENAI_API_KEY"`
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY_HERE") 
 
+# For default behavior, e.g. writing to file for local testing and 
+# saving to AWS Dynamo database using AWS Lambda serverless, simply
+# leave the following two variables as is.
+DATABASE = os.getenv("DATABASE") 			
+DATABASE_URL = os.getenv("DATABASE_URL") 	
 
+"""
+Below you will see a few elements in INTERVIEW_PARAMETERS: *STOCK_MARKET* and *VOTING*. 
+*STOCK_MARKET* contains the parameters and prompts from our paper. 
+*VOTING* is just a placeholder. 
+
+You can add your own interview parameters by creating a new entry in this dictionary file. 
+Namely, you will need:
+
+*first_question*: the opening question for the interview
+*interview_plan*: the list of subtopics to be covered in the interview (in the `topic` variable) and the number of questions per topic (`length`)
+*closing_questions*: a (fixed) list of questions/comments (if any) with which to end the interview
+*end_of_interview_message*: the message to display at the end of the interview
+*termination_message*: the message to display in the event the user responds to an ended interview
+*flagged_message*: the message to display to flagged messages
+*off_topic_message*: the message to display if the user's response is deemed off-topic
+*moderate_answers*: (True) whether to active the moderation agent for incoming answers from the respondent
+*moderate_questions*: (True) whether to check outgoing questions with OpenAI's moderation endpoint
+*summarize*: (True) whether to active the summarization agent
+*summary*: Prompt for the summarization agent
+*transition*: Prompt for the transition agent 
+*probe*: Prompt for the probing agent
+*moderator*: Prompt for the moderator agent
+
+For the prompts, you can also specify a maximum length (`max_tokens`) for the desired 
+response, a `temperature` for the LLM, and a `model` for the LLM to use. Note that the 
+prompt may reference the current state of the interview or the defined interview 
+structure through the use of curly bracket variables (e.g. `{topics}` will be populated 
+by the defined `interview_plan`).
+"""
 INTERVIEW_PARAMETERS = {
 	"STOCK_MARKET": {
 		"_name": "STOCK_MARKET",
