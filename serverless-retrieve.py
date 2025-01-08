@@ -46,3 +46,4 @@ if __name__ == "__main__":
     parser.add_argument('--output_path', type=str, default="chats.csv", help="Filepath to chats CSV")
     args = parser.parse_args()
     retrieve_all_sessions(args.table_name, args.output_path)
+    
