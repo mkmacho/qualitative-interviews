@@ -1,7 +1,6 @@
 from boto3 import resource
-from pandas import DataFrame
 from argparse import ArgumentParser
-
+from csv import DictWriter
 
 def retrieve_all_sessions(table_name:str, output_path:str, print_chats:bool=False):
     """ 
@@ -10,13 +9,14 @@ def retrieve_all_sessions(table_name:str, output_path:str, print_chats:bool=Fals
     Returns
         chats: (list) of "long" form data with one session-message per row, e.g.
             [
-                {'session_id':101, 'time':0, 'role':'interviewer', 'message':'Hello', ...}
-                {'session_id':101, 'time':1, 'role':'respondent', 'message':'World', ...}
+                {'session_id':101, 'time':0, 'role':'interviewer', 'message':'Hello', ...},
+                {'session_id':101, 'time':1, 'role':'respondent', 'message':'World', ...},
                 ...
             ]
     """
-    table = resource('dynamodb').Table(table_name)
 
+    # Retrieve interview sessions from DynamoDB
+    table = resource('dynamodb').Table(table_name)
     chats = []
     last_eval = None
     while True:
@@ -28,12 +28,16 @@ def retrieve_all_sessions(table_name:str, output_path:str, print_chats:bool=Fals
         if not resp.get('LastEvaluatedKey'): break
         last_eval = resp['LastEvaluatedKey']
 
-    # Save to CSV
-    DataFrame(chats).to_csv(output_path)
+    # Save to specified CSV output filepath
+    with open(output_path, 'w') as csvfile:
+        writer = DictWriter(csvfile, fieldnames=chats[0].keys())
+        writer.writeheader()
+        writer.writerows(chats)
+
+    # Print to console
     if print_chats: 
         for chat in chats:
             print(chat)
-    return
     
 
 if __name__ == "__main__":
