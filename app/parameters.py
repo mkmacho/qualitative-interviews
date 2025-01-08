@@ -1,6 +1,8 @@
-DATABASE = None
-DATABASE_URL = None
-OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE"
+import os
+
+DATABASE = os.getenv("DATABASE") 			# Defaults to None (for AWS, leave as is)
+DATABASE_URL = os.getenv("DATABASE_URL") 	# Defaults to None (for AWS, leave as is)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY_HERE") 
 
 
 INTERVIEW_PARAMETERS = {
