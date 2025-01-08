@@ -30,14 +30,14 @@ For inquiries about commercial licenses, please contact [Felix Chopra](f.chopra@
 
 
 ## Table of Contents
-* [Option 1: Local testing](#local)
+* [Option 1: Local testing](#option1)
     * [Docker](#docker)
     * [Manually](#manual)
-* [Option 2: Deploy as Flask app](#flask)
-* [Option 3: Deploy on AWS](#serverless)
-* [Integrating with Qualtircs](#qualtrics)
-* [Parameters of the app](#customization)
-* [How to interact with the app](#api)
+* [Option 2: Deploy as Flask app](#option2)
+* [Option 3: Deploy on AWS](#option3)
+* [Integrating with Qualtrics](#integrating)
+* [Parameters of the app](#parameters)
+* [How to interact with the app](#how)
 
 
 ## Option 1: Local testing
