@@ -5,7 +5,7 @@ This codebase allows researchers to conduct qualitative interviews with human su
 The application requires access to a large language model (LLM). The code currently operates with OpenAI's API. You can obtain API keys [here](https://platform.openai.com/).
 
 
-### Paper and citation
+## Paper and citation
 
 The paper is available here: [https://dx.doi.org/10.2139/ssrn.4583756](https://dx.doi.org/10.2139/ssrn.4583756).
 
@@ -28,7 +28,8 @@ or use the suggested Bibtex entry:
 
 For inquiries about commercial licenses, please contact [Felix Chopra](f.chopra@fs.de). 
 
-### Table of Contents
+
+## Table of Contents
 * [Option 1: Local testing](#local)
     * [Docker](#docker)
     * [Manually](#manual)
@@ -43,19 +44,11 @@ For inquiries about commercial licenses, please contact [Felix Chopra](f.chopra@
 
 This option is ideal for testing the app before data collection and making changes to the code or prompts to better fit your research setting. We explain how this is done using Docker as well as manually.
 
-Note that regardless of how you build and test, the application will look for an OpenAI API key in your environment, which can be set as
-```bash
-export OPENAI_API_KEY=MY_OPENAI_API_KEY
-```
-or as a *hard-coded* value which can be set by simply changing line 5 of `parameters.py` from:
+Note that regardless of how you build and test, the application will require an OpenAI key. You can supply this by simply changing line 5 of `parameters.py` from:
 ```python
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY_HERE")
 ```
 to 
-```python
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "MY_OPENAI_API_KEY")
-```
-or even just
 ```python
 OPENAI_API_KEY = "MY_OPENAI_API_KEY"
 ```
@@ -63,9 +56,10 @@ OPENAI_API_KEY = "MY_OPENAI_API_KEY"
 
 ### Docker
 
-The cleanest way to then run the application---locally or remotely---is through a [Docker](https://www.docker.com/products/docker-desktop/) container. You can easily build a Docker image containing only the necessary packages in a contained environment from whatever operating system.
+The cleanest way to then run the application -- locally or remotely -- is through a [Docker](https://docs.docker.com/engine/install/) container. You can easily build a Docker image containing only the necessary packages in a contained environment from whatever operating system. You will also need to have Git [installed](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
-**Step 1**: Clone the GitHub repo.
+
+**Step 1**: Clone the project from GitHub and navigate into the repo:
 
 ```bash
 git clone https://github.com/mkmacho/qualitative-interviews.git
@@ -84,8 +78,7 @@ docker run --detach --publish 8000:80 interviews
 ```bash
 docker compose up --build --detach
 ```
-
-This option allows you to easily use a more sophisticated PostgreSQL database, linking it with the applicaiton container, rather than writing to file --- though this is in no way necessary for local testing.
+This option allows you to easily use a more sophisticated PostgreSQL database, linking it with the applicaiton container, rather than writing to file -- though this is in no way necessary for local testing.
 
 
 You can now make requests to your local host listening on port `8000` (e.g. `localhost:8000`, `0.0.0.0:8000`, or `127.0.0.1:8000`). Running in the command line `curl http://127.0.0.1:8000/` should return text `Running!` to confirm the application is successfully up and running.
@@ -103,11 +96,12 @@ or alternatively run:
 docker run --detach --publish 8000:80 --volume $(pwd)/app:/app interviews
 ```
 
+
 ### Manual
 
-If you decide against Docker, you will need to have (or download) Python. We recommend stable version 3.12. You can install Python from [here](https://www.python.org/downloads). 
+If you decide against Docker, you will need to have (or download) Python. We recommend stable version 3.12. You can install Python from [here](https://www.python.org/downloads). You will also need to have Git [installed](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
-**Optional Step 0:** Create a virtual environment, e.g. `qualitative-interviews`, and activate it, so as to install necessary packages in a clean environment, guaranteeing no clashing dependencies. In your command-line terminal run:
+**Optional Step 0:** Create a virtual environment, e.g. `interviews-env`, and activate it, so as to install necessary packages in a clean environment, guaranteeing no clashing dependencies. In your command-line terminal run:
 
 ```bash
 python -m venv interviews-env
@@ -121,7 +115,7 @@ source bin/activate
 git clone https://github.com/mkmacho/qualitative-interviews.git
 cd qualitative-interviews
 
-python -m pip install -r local_requirements.txt
+pip install -r local_requirements.txt
 ```
 
 **Step 2:** Now start a *development* (Werkzeug) server to host your application by simply running:
@@ -132,6 +126,7 @@ python app/app.py
 
 As you can see in `app.py`, we are listening on port `8000` so you can now make requests to your local host (e.g. `localhost`, `0.0.0.0`, or `127.0.0.1`). Running in the command line `curl http://127.0.0.1:8000/` should return text `Running!` to confirm the application is successfully up and running.
 
+
 **Comments**: 
 - By default, this set-up will store sessions by writing to file. 
 - Changes to your local code will automatically restart the server, reflecting your changes. You can stop the server by entering `control-C` on your command line.
@@ -139,9 +134,7 @@ As you can see in `app.py`, we are listening on port `8000` so you can now make 
 
 ## Option 2: Deploy as Flask app 
 
-This option is for when you are ready to collect data and want to deploy your application on a production server. The benefit of this option is that you can manage the server and all aspects of your code, logs, and application service directly. 
-
-**Step 0:** On your remote server, make sure Docker is [installed](https://docs.docker.com/engine/install/).
+This option is for when you are ready to collect data and want to deploy your application on a production server. The benefit of this option is that you can manage the server and all aspects of your code, logs, and application service directly. We recommend that you use Docker for this, so again on your remote server make sure Docker is [installed](https://docs.docker.com/engine/install/).
 
 **Step 1a:** Using e.g. `scp` copy your current codebase, including changes you have made, to your remote server.
 
@@ -160,7 +153,7 @@ To do this, make a free Docker [account](https://app.docker.com/signup) and then
 docker run --detach --publish 8000:80 interviews
 ```
 
-Your remote machine will now forward requests to port 8000 onto port 80 on which the Docker container is listening, thereby processing requests. 
+Your remote machine will now forward requests to port 8000 onto port 80 on which the Docker container is listening, thereby processing requests to `<REMOTE_HOST>:8000/`. 
 
 
 ## Option 3: Deploy on AWS
@@ -201,6 +194,7 @@ curl -X POST \
     -d '{"route":"next", "payload":{"session_id":"test","interview_id":"STOCK_MARKET","user_message":"test"}}' \
     https://<SOME_AWS_ID>.execute-api.<AWS_REGION>.amazonaws.com/Prod/
 ```
+- If you want to log information from the application or debug, you can look at AWS CloudWatch.
 
 
 ## Integrating with Qualtrics
