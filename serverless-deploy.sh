@@ -2,15 +2,14 @@
 
 echo "----------------------------------- IMPORTANT NOTES: --------------------------------------"
 echo "This file deploys your application. You should run:"
-echo "    $0 <S3_BUCKET>"; 
+echo "$0 <S3_BUCKET>"; 
 echo
 echo "Or if you prefer, export BUCKET_NAME as an environment variables or even modify this file "
 echo "directly with chosen bucket name from serverless-setup. "
 echo "-------------------------------------------------------------------------------------------"
 echo 
 
-OPENAI_API_KEY=${1:-${OPENAI_API_KEY}}
-BUCKET_NAME=${2:-${S3_BUCKET}}
+BUCKET_NAME=${1:-${S3_BUCKET}}
 TABLE_NAME=${DYNAMO_TABLE:-'interview-sessions'}
 
 if [ -z "$BUCKET_NAME" ]

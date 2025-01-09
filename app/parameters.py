@@ -2,7 +2,7 @@ import os
 
 # Either export environment variable OPENAI_API_KEY or modify line 5
 # directly, e.g. changing to `OPENAI_API_KEY = "MY_OPENAI_API_KEY"`
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY_HERE") 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "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") 
 
 
 """

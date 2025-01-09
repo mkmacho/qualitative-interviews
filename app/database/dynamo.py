@@ -11,11 +11,11 @@ class DynamoDB(object):
         self.table = resource('dynamodb').Table(table_name)
         logging.info("DynamoDB table connection established. Should happen only once!")
 
-    def load_remote_session(self, session_id:str) -> dict:
+    def load_remote_session(self, session_id:str) -> list:
         """ Retrieve the interview session data from the database. """
         result = self.table.get_item(Key={'session_id':session_id})
         if result.get('Item'):
-            return result['Item']
+            return result['Item']['session']
         logging.warning(f"Can't load session '{session_id}': not started!")
         return {}
 
@@ -24,15 +24,15 @@ class DynamoDB(object):
         self.table.delete_item(Key={"session_id":session_id})
         logging.info(f"Session '{session_id}' deleted!")
 
-    def update_remote_session(self, session_id:str, data:dict):
+    def update_remote_session(self, session_id:str, session:list):
         """ Update or insert session data in the database. """
-        assert 'session_id' in data and data['session_id'] == session_id
-        self.table.put_item(Item=data)
+        assert 'session_id' in session[-1] and session[-1]['session_id'] == session_id
+        self.table.put_item(Item={'session_id':session_id, 'session':session})
         logging.info(f"Session '{session_id}' updated!")
 
     def retrieve_sessions(self, sessions:list=None) -> list:
         """ 
-        Retrieve chat history (list of dicts) for specified sessions (list of dicts)
+        Retrieve chat history (list of dicts) for specified sessions
         or *all* sessions if no sessions specified in optional argument.
 
         Returns
@@ -53,7 +53,7 @@ class DynamoDB(object):
                 if sessions and not session['session_id'] in sessions: 
                     continue
                 # Add all messages in current interview session
-                chats.extend([message for message in session['chat']])
+                chats.extend(session['session'])
             if not resp.get('LastEvaluatedKey'): break
             last_eval = resp['LastEvaluatedKey']
 

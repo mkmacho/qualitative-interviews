@@ -16,16 +16,17 @@ def chat_to_string(chat:list, topic_idx:int=None) -> str:
             topic_history += f'Interviewee: "{message['content']}"\n'
     return topic_history.strip()
 
-def fill_prompt_with_interview_state(template:str, topics:list, interview_state:dict) -> str:
+def fill_prompt_with_interview(template:str, topics:list, history:list, user_message:str=None) -> str:
     """ Fill the prompt template with parameters from current interview. """
-    current_topic_idx = min(int(interview_state['current_topic_idx']), len(topics))
+    state = history[-1]
+    current_topic_idx = min(int(state['topic_idx']), len(topics))
     next_topic_idx = min(current_topic_idx + 1, len(topics))
-    current_topic_chat = chat_to_string(interview_state['chat'], current_topic_idx)
+    current_topic_chat = chat_to_string(history, current_topic_idx)
     prompt = template.format(
         topics='\n'.join([topic['topic'] for topic in topics]),
-        question=interview_state["chat"][-1]["content"],
-        answer=interview_state["user_message"],
-        summary=interview_state['summary'],
+        question=state["content"],
+        answer=user_message,
+        summary=state['summary'],
         current_topic=topics[current_topic_idx - 1]["topic"],
         next_interview_topic=topics[next_topic_idx - 1]["topic"],
         current_topic_history=current_topic_chat

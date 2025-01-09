@@ -4,7 +4,7 @@ import json
 
 
 class FileWriter(object):
-    def __init__(self, filedir:str='data') :
+    def __init__(self, filedir:str='./app/data') :
         self.filedir = filedir
         if not os.path.isdir(filedir): os.makedirs(filedir)
         logging.info(f"Will write interviews to '{filedir}'.")
@@ -18,10 +18,8 @@ class FileWriter(object):
         with open(filepath, 'r') as f:
             session = json.load(f) 
 
-        for k, v in session.items():
-            print(k, type(k), type(v), v)
+        # Delete this line: 
         logging.info(f"Session loaded:\n{session}")
-        logging.info(f"Session parameters:\n({type(session['parameters'])})\n{session['parameters']}")
         
         return session
 
@@ -30,16 +28,16 @@ class FileWriter(object):
         os.remove(os.path.join(self.filedir, f"{session_id}.json"))
         logging.info(f"Session '{session_id}' deleted!")
 
-    def update_remote_session(self, session_id:str, data:dict):
+    def update_remote_session(self, session_id:str, session:list):
         """ Update or insert session data in the 'database'. """
-        assert 'session_id' in data and data['session_id'] == session_id
+        assert 'session_id' in session[-1] and session[-1]['session_id'] == session_id
         with open(os.path.join(self.filedir, f"{session_id}.json"), 'w') as f:
-            json.dump(data, f)
+            json.dump(session, f)
         logging.info(f"Session '{session_id}' updated!")
 
     def retrieve_sessions(self, sessions:list=None) -> list:
         """ 
-        Retrieve chat history (list of dicts) for specified sessions (list of dicts)
+        Retrieve chat history (list of dicts) for specified sessions
         or *all* sessions if no sessions specified in optional argument.
 
         Returns
@@ -58,7 +56,7 @@ class FileWriter(object):
             with open(filepath, 'r') as f:
                 session = json.load(f) 
             # Add all messages in current interview session
-            chats.extend([message for message in session['chat']])
+            chats.extend(session)
 
         logging.info(f"Retrieved {len(chats)} messages!")
         return chats

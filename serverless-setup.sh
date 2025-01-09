@@ -2,11 +2,11 @@
 
 echo "----------------------------------- IMPORTANT NOTES: --------------------------------------"
 echo "This file configures AWS in order to build and deploy your application. You should run:"
-echo "    $0 <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION> <S3_BUCKET>"; 
+echo "$0 <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION> <S3_BUCKET>"; 
 echo
 echo "Or if you prefer, export those variables as environment variables or even modify this file "
 echo "directly defining the appropriate variables with the keys you generated and chosen bucket name"
-echo "Then, run without arguments the script: "; echo "    $0    "; 
+echo "Then, run without arguments the script: "; echo "$0    "; 
 echo 
 echo "Note: if a 'BucketAlreadyOwnedByYou' error arises, ignore it: it means you are running this"
 echo "script attempting to create a bucket that already exists. This is not a problem. "
