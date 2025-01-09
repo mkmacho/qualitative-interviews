@@ -1,6 +1,7 @@
 from boto3 import resource
 import logging 
 
+
 class DynamoDB(object):
     def __init__(self, table_name:str) :
         """ 

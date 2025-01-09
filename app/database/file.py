@@ -10,26 +10,28 @@ class FileWriter(object):
         logging.info(f"Will write interviews to '{filedir}'.")
 
     def load_remote_session(self, session_id:str) -> dict:
-        """ Retrieve the interview session data from file. """
+        """ Retrieve the interview session data from the 'database'. """
         filepath = os.path.join(self.filedir, f"{session_id}.json")
         if not os.path.isfile(filepath):
             logging.warning(f"Can't load session '{session_id}': not started!")
             return {}
         with open(filepath, 'r') as f:
             session = json.load(f) 
+
         for k, v in session.items():
             print(k, type(k), type(v), v)
         logging.info(f"Session loaded:\n{session}")
         logging.info(f"Session parameters:\n({type(session['parameters'])})\n{session['parameters']}")
+        
         return session
 
     def delete_remote_session(self, session_id:str):
-        """ Delete session data from the database. """
+        """ Delete session data from the 'database'. """
         os.remove(os.path.join(self.filedir, f"{session_id}.json"))
         logging.info(f"Session '{session_id}' deleted!")
 
     def update_remote_session(self, session_id:str, data:dict):
-        """ Update or insert session data in the database. """
+        """ Update or insert session data in the 'database'. """
         assert 'session_id' in data and data['session_id'] == session_id
         with open(os.path.join(self.filedir, f"{session_id}.json"), 'w') as f:
             json.dump(data, f)

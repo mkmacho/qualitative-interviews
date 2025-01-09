@@ -66,7 +66,8 @@ aws s3api put-bucket-lifecycle-configuration \
 	    ]
 	}'
 
-# Create AWS DynamoDB table to store interviews
+# Create AWS DynamoDB table to store interviews. By default named 'interview-sessions', 
+# unless DYNAMO_TABLE is otherwise set as environment variable.
 TABLE_NAME=${DYNAMO_TABLE:-'interview-sessions'}
 echo; echo "Creating DynamoDB table '$TABLE_NAME' to store interview sessions"
 aws dynamodb create-table \

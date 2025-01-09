@@ -4,11 +4,6 @@ import os
 # directly, e.g. changing to `OPENAI_API_KEY = "MY_OPENAI_API_KEY"`
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY_HERE") 
 
-# For default behavior, e.g. writing to file for local testing and 
-# saving to AWS Dynamo database using AWS Lambda serverless, simply
-# leave the following two variables as is.
-DATABASE = os.getenv("DATABASE") 			
-DATABASE_URL = os.getenv("DATABASE_URL") 	
 
 """
 Below you will see a few elements in INTERVIEW_PARAMETERS: *STOCK_MARKET* and *VOTING*. 

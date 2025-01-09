@@ -66,35 +66,26 @@ git clone https://github.com/mkmacho/qualitative-interviews.git
 cd qualitative-interviews
 ```
 
-**Step 2a**: Build a Docker image (e.g. `interviews`) and run a container (in the background, if you add the `--detach` flag) listening on the `8000` port using the provided `Dockerfile` by running:
+**Step 2**: Build a Docker image (e.g. `interviews`) and run a container:
+
+To build and then run a container in the background you can add the `--detach` flag. We are publishing the `8000` port to forward requests and sharing a filesystem within the `./app` directory such to see outputs directly. This can be done by running:
 
 ```bash
 docker build --tag interviews .
-docker run --detach --publish 8000:80 interviews
+docker run --detach --publish 8000:80 --volume $(pwd)/app:/app interviews
 ```
 
-**Step 2b**: Alternatively, build and run using the template `docker-compose` YAML by running:
+Or, alternatively, build and run using the template `docker-compose` YAML by running:
 
 ```bash
 docker compose up --build --detach
 ```
-This option allows you to easily use a more sophisticated PostgreSQL database, linking it with the applicaiton container, rather than writing to file -- though this is in no way necessary for local testing.
-
 
 You can now make requests to your local host listening on port `8000` (e.g. `localhost:8000`, `0.0.0.0:8000`, or `127.0.0.1:8000`). Running in the command line `curl http://127.0.0.1:8000/` should return text `Running!` to confirm the application is successfully up and running.
 
 
 **Comments**: 
-- By default, this set-up will store sessions by writing to file. You can switch to a PostgreSQL database by changing `parameters.py` such that `DATABASE = "POSTGRES"` and `DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:5432/interviews"`.
-- You can stop (e.g. `docker stop`) and remove (i.e. `docker rm`) containers, or do the same for networks in the compose file (e.g. `docker compose down`). If you want to make local changes and have them be reflected in your Docker container upon restart (e.g. `docker restart` or `docker compose restart`), you can add to the `app` configuration in your `docker-compose.yml` file:
-```bash
-    volumes:
-      - ./app:/app 
-```
-or alternatively run:
-```bash
-docker run --detach --publish 8000:80 --volume $(pwd)/app:/app interviews
-```
+- You can stop (e.g. `docker stop`) and remove (i.e. `docker rm`) containers, or do the same using the compose file (e.g. `docker compose down`). If you make local changes to your code, you can restart the container to reflect these changes using `docker restart` or `docker compose restart`.
 
 
 ### Manual
@@ -128,7 +119,6 @@ As you can see in `app.py`, we are listening on port `8000` so you can now make 
 
 
 **Comments**: 
-- By default, this set-up will store sessions by writing to file. 
 - Changes to your local code will automatically restart the server, reflecting your changes. You can stop the server by entering `control-C` on your command line.
 
 
@@ -136,24 +126,19 @@ As you can see in `app.py`, we are listening on port `8000` so you can now make 
 
 This option is for when you are ready to collect data and want to deploy your application on a production server. The benefit of this option is that you can manage the server and all aspects of your code, logs, and application service directly. We recommend that you use Docker for this, so again on your remote server make sure Docker is [installed](https://docs.docker.com/engine/install/).
 
-**Step 1a:** Using e.g. `scp` copy your current codebase, including changes you have made, to your remote server.
+**Step 1:** Copy your current codebase, including changes you have made, to your remote server.
 
-Once you have your codebase on your remote server, you can build a Docker image just as you did locally, e.g.
+In Linux, you can securely transfer files between servers using Secure Shell (SSH) protocol with `scp`, e.g.
 ```bash
-docker build -t interviews .
+scp -r <LOCAL_DIRECTORY> <REMOTE_DIRECTORY>
 ```
 
-**Step 1b:** Alternatively, push your local changes to Docker Cloud and pull a copy onto your remote server.
-
-To do this, make a free Docker [account](https://app.docker.com/signup) and then `push` your local codebase to Dockerhub. Then from your remote server, `pull` that image from the Cloud. This way you do not have to manually copy any files to your server.
-
-**Step 2:** Now you can `run` a container from the image (e.g. `interviews`) you just built or pulled using:
-
+**Step 2:** Once you have your codebase on your remote server, you can use Docker just as you did locally, e.g.
 ```bash
-docker run --detach --publish 8000:80 interviews
+docker compose up --build --detach
 ```
 
-Your remote machine will now forward requests to port 8000 onto port 80 on which the Docker container is listening, thereby processing requests to `<REMOTE_HOST>:8000/`. 
+Your remote machine will now forward requests to port `8000` onto port `80` on which the Docker container is listening, thereby processing requests to `<REMOTE_HOST>:8000/`. 
 
 
 ## Option 3: Deploy on AWS
@@ -167,16 +152,15 @@ This option is for when you are ready to collect data and want to run your appli
 ```bash
 ./serverless-setup.sh <AWS_PUBLIC_ACCESS_KEY> <AWS_SECRET_ACCESS_KEY> <AWS_REGION> <S3_BUCKET>
 ```
-
 supplying your keys, your region (e.g. `eu-north-1`), and your chosen bucket name (e.g. `my-bucket`) which will configure your command line AWS credentials, create an AWS storage bucket where build template will be stored, and create an AWS Dynamo database table (by default named `interview-sessions`) to persistently store interviews sessions (in the Cloud). This has to be run just once!
 
 **Step 3:** Deploy the Lambda function with OpenAI access and expose a public endpoint to which you can make requests: 
 
 ```bash 
-./serverless-deploy.sh <OPENAI_API_KEY> <S3_BUCKET>
+./serverless-deploy.sh <S3_BUCKET>
 ```
 
-supplying your OpenAI API key and the same AWS S3 bucket name provided above (e.g. `my-bucket`).
+supplying the same AWS S3 bucket name provided above (e.g. `my-bucket`).
 
 Note that this script will return the following information:
 ```bash
@@ -194,7 +178,7 @@ curl -X POST \
     -d '{"route":"next", "payload":{"session_id":"test","interview_id":"STOCK_MARKET","user_message":"test"}}' \
     https://<SOME_AWS_ID>.execute-api.<AWS_REGION>.amazonaws.com/Prod/
 ```
-- If you want to log information from the application or debug, you can look at AWS CloudWatch.
+- If you want to log information from the application or debug your code, you can look at AWS CloudWatch.
 
 
 ## Integrating with Qualtrics

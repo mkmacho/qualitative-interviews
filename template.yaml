@@ -45,22 +45,14 @@ Resources:
       Environment:
         Variables:
           DATABASE: DYNAMODB
-          DATABASE_URL: !Ref TableName  # Required connector to DynamoDB backend 
-          PORT: !Ref Port                    
-          OPENAI_API_KEY: !Ref OpenAIAPIKey   
+          DYNAMO_TABLE: !Ref TableName  # Required connector to DynamoDB backend 
+          PORT: 8000                   
 
 Parameters:
-  OpenAIAPIKey:
-    Description: Required OpenAI API key for GPT integration
-    Type: String
-  Port:
-    Description: Required for the Lambda Web Adapter
-    Type: String
-    Default: 8000
   TableName:
     Description: Required name of table which application will write to
     Type: String
-    Default: INTERVIEWS
+    Default: interview-sessions
 
 
 Outputs:

@@ -1,6 +1,5 @@
 import json
 from core.logic import next_question, retrieve_sessions, transcribe
-from core.auxiliary import DecimalEncoder
 
 def handler(event, context):
     """
@@ -49,10 +48,7 @@ def handler(event, context):
             )
         )
     elif request.get('route') == 'retrieve':
-        response['body'] = json.dumps(
-            retrieve_sessions(payload),
-            cls=DecimalEncoder
-        )
+        response['body'] = json.dumps(retrieve_sessions(payload))
     else:
         raise ValueError("Invalid request. Please try again.")
 

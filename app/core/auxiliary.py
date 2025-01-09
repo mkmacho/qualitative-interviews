@@ -2,16 +2,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 import time
 import logging 
-import os
-import json 
-from decimal import Decimal
-
-class DecimalEncoder(json.JSONEncoder):
-    """ Custom JSON Encoder class for AWS Decimal handling. """
-    def default(self, obj):
-        if isinstance(obj, Decimal):
-            return str(obj)
-        return super().default(obj)
 
 def chat_to_string(chat:list, topic_idx:int=None) -> str:
     """ Convert messages from chat into one string. """
@@ -47,8 +37,6 @@ def fill_prompt_with_interview_state(template:str, topics:list, interview_state:
 def execute_queries(query, task_args:dict) -> dict:
     """ 
     Execute queries (concurrently if multiple).
-    In current Python 3.13, default `max_workers` set to
-        min(32, (os.process_cpu_count() or 1) + 4)
 
     Args:
         query: function to execute

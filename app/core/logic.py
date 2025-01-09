@@ -1,21 +1,15 @@
 import logging
 import os
-from parameters import (
-    INTERVIEW_PARAMETERS,
-    DATABASE, DATABASE_URL,
-    OPENAI_API_KEY
-)
+from parameters import INTERVIEW_PARAMETERS, OPENAI_API_KEY
 from core.manager import InterviewManager
 from core.agent import LLMAgent
 
 def connect_to_database():
     """ Instantiate specific backend database. """
-    if DATABASE == "POSTGRES":
-        from database.postgres import PostgreSQL
-        return PostgreSQL(DATABASE_URL)
-    if DATABASE == "DYNAMODB":
+    if os.getenv("DATABASE") == "DYNAMODB":
+        # For AWS, leverage Dynamo database
         from database.dynamo import DynamoDB
-        return DynamoDB(DATABASE_URL)
+        return DynamoDB(os.environ['DYNAMO_TABLE'])
     from database.file import FileWriter
     return FileWriter()
 
