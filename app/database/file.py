@@ -17,10 +17,6 @@ class FileWriter(object):
             return {}
         with open(filepath, 'r') as f:
             session = json.load(f) 
-
-        # Delete this line: 
-        logging.info(f"Session loaded:\n{session}")
-        
         return session
 
     def delete_remote_session(self, session_id:str):

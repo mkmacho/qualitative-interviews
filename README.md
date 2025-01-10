@@ -68,7 +68,7 @@ cd qualitative-interviews
 
 **Step 2**: Build a Docker image (e.g. `interviews`) and run a container:
 
-To build and then run a container in the background you can add the `--detach` flag. We are publishing the `8000` port to forward requests and sharing a filesystem within the `./app` directory such to see outputs directly. This can be done by running:
+To build and then run a container in the background you can add the `--detach` flag. We are publishing the `8000` port to forward requests and mounting (i.e. sharing) the filesystem within the `/app` subdirectory such to see outputs directly. This can be done by running:
 
 ```bash
 docker build --tag interviews .
@@ -169,7 +169,7 @@ Description     API Gateway endpoint URL for function
 Value           https://<SOME_AWS_ID>.execute-api.<AWS_REGION>.amazonaws.com/Prod/
 ```
 
-Save this value.  It is the public endpoint for your Lambda function. There is no endpoint suffix for this serverless function so requests will go straight to this URL.
+Save this final value, it is the public endpoint for your Lambda function. There is no endpoint suffix for this serverless function so requests will go straight to this URL.
 
 **Comments:** 
 - You can assert the function is up and working by making a `curl` call from the command-line, e.g.
@@ -183,13 +183,13 @@ curl -X POST \
 
 ## Integrating with Qualtrics
 
-If you have deployed your app, you can integrate it with your Qualtrics survey. 
+Once you have deployed your app, you can integrate it (using the public endpoint) directly within your Qualtrics survey setup. 
 
 **Step 1:** In Qualtrics, add embedded variables `user_id`, `interview_id` and `interview_endpoint`. `user_id` should identify your respondent.  `interview_id` should identify the parameter settings of your AI interviewer (see below, e.g. `STOCK_MARKET`). `interview_endpoint` is the public endpoint of your hosted application.
 
 **Step 2:** Create a `Text/Graphic` question in your survey. The folders `Qualtrics` contain HTML and JS files. Copy the content into the HTML and JS fields of the `Text/Graphic` question.
 
-**Step 3:** Test your survey!
+**Step 3:** Test your low-cost, scalable survey!
 
 
 ## Parameters of the app
@@ -290,5 +290,5 @@ This endpoint/route returns a list of messages, organized by `session_id`, `time
 Similarly, having run your experiments serverless on AWS, you can then download all sessions using the helper Python script `serverless-retrieve.py` which returns the above as a CSV from a given DynamoDB table, e.g.
 
 ```bash
-python serverless-retrieve.py --table_name=interview-sessions --output_path=PATH_TO_DATA.csv
+python serverless-retrieve.py --table_name=interview-sessions --output_path=DESIRED_PATH_TO_DATA.csv
 ```
