@@ -72,10 +72,10 @@ To build and then run a container in the background you can add the `--detach` f
 
 ```bash
 docker build --tag interviews .
-docker run --detach --publish 8000:80 --volume $(pwd)/app:/app interviews
+docker run --detach --publish 8000:80 --volume $(pwd)/app:/app --env DATA_DIR=/app/data --name app interviews
 ```
 
-Or, alternatively, build and run using the template `docker-compose` YAML by running:
+Or, alternatively, build and run using the template `docker-compose` YAML by simply running:
 
 ```bash
 docker compose up --build --detach
