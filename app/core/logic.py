@@ -54,9 +54,10 @@ def retrieve_sessions(sessions:list=None) -> dict:
     """ Return specified or all existing interview sessions. """
     return db.retrieve_sessions(sessions)
 
-def transcribe(**kwargs) -> dict:
+def transcribe(audio:str) -> dict:
     """ Return audio file transcription using OpenAI Whisper API """
-    transcription = agent.transcribe(**kwargs)
+    logging.critical(f"Audio is: {type(audio)}...")
+    transcription = agent.transcribe(audio)
     logging.info(f"Returning transcription text: '{transcription}'")
     return {'transcription':transcription}
 

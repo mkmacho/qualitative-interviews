@@ -19,13 +19,13 @@ class LLMAgent(object):
         """ Load interview guidelines for prompt construction. """
         self.parameters = parameters
 
-    def transcribe(self, audio, model:str="whisper-1") -> str:
+    def transcribe(self, audio) -> str:
         """ Transcribe audio file. """
         audio_file = BytesIO(b64decode(audio))
         audio_file.name = "audio.webm"
 
         response = self.client.audio.transcriptions.create(
-          model=model, 
+          model="whisper-1", 
           file=audio_file,
           language="en" # English language input
         )
