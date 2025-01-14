@@ -36,9 +36,7 @@ def handler(event, context):
     request = json.loads(event.get('body', '{}'))
     payload = request.get('payload', {})
     if request.get('route') == 'transcribe':
-        response['body'] = json.dumps(
-            transcribe(payload['audio'])
-        )
+        response['body'] = json.dumps(transcribe(payload['audio']))
     elif request.get('route') == 'next':
         response['body'] = json.dumps(
             next_question(

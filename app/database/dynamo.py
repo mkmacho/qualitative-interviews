@@ -37,28 +37,32 @@ class DynamoDB(object):
         or *all* sessions if no sessions specified in optional argument.
 
         Returns
-            chats: (list) of "long" form data with one session-message per row, e.g.
+            all_interview_chats: (list) of "long" form data, e.g.
                 [
-                    {'session_id':101, 'time':0, 'role':'interviewer', 'message':'Hello', ...}
-                    {'session_id':101, 'time':1, 'role':'respondent', 'message':'World', ...}
+                    {'session_id':101, 'time':0, 'role':'interviewer', 'message':'Hello', ... },
+                    {'session_id':101, 'time':1, 'role':'respondent', 'message':'World', ... },
                     ...
                 ]
         """
-        chats = []
+        all_interview_chats = []
         last_eval = None
         while True:
             # Handle multiple chunks with contiguous scan
             resp = self.table.scan(ExclusiveStartKey=last_eval) if last_eval else self.table.scan()
-            for session in resp.get('Items',[]):
+            for item in resp.get('Items', []):
                 # Skip keys not specified
-                if sessions and not session['session_id'] in sessions: 
+                if sessions and not item['session_id'] in sessions: 
                     continue
+                # Get JSON serializable data
+                session_messages = [dict(map(
+                    lambda x: (x[0], int(x[1])) if isinstance(x[1], Decimal) \
+                        else x, message.items()
+                )) for message in item['session']]
                 # Add all messages in current interview session
-                chats.extend(session['session'])
-                item_retrieved_from_db = dict(map(lambda x: (x[0], int(x[1])) if isinstance(x[1], Decimal) else x, item_retrieved_from_db.items()))
+                all_interview_chats.extend(session_messages)
 
             if not resp.get('LastEvaluatedKey'): break
             last_eval = resp['LastEvaluatedKey']
 
-        logging.info(f"Retrieved {len(chats)} messages!")
-        return chats
+        logging.info(f"Retrieved {len(all_interview_chats)} messages!")
+        return all_interview_chats

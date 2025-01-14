@@ -18,9 +18,7 @@ then
 fi
 
 echo; echo "Building application including local changes..."
-sam build \
-	--use-container \
-	--no-cached
+sam build --use-container 
 
 
 echo; echo "Deploying to cloud using provided S3 bucket and Dynamo table..." 
