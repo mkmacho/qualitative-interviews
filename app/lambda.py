@@ -1,5 +1,9 @@
 import json
-from core.logic import next_question, retrieve_sessions, transcribe
+from core.logic import (
+    next_question, 
+    retrieve_sessions, 
+    transcribe
+)
 
 def handler(event, context):
     """
