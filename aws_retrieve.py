@@ -4,9 +4,12 @@ from csv import DictWriter
 
 def retrieve_all_sessions(table_name:str, output_path:str, print_chats:bool=False):
     """ 
-    Retrieve chat history (as long, session-message stored data) to CSV 
-    (and optionally `print_chats`) for all sessions from `table_name` table.
-    Will save CSV to the required `output_path` filepath.
+    Retrieve all stored AI interviews from your AWS DynamoDB database and export them as a CSV file.
+    The variables "session_id" and "order" uniquely identify each row.
+    Arguments:
+    - table_name (str): Name of the DynamoDB table from which to retrieve the interviews.
+    - output_path (str): Filepath to save the CSV file.
+    - print_chats (bool): Whether to print each interview session to console.
     """
     # Retrieve interview sessions from DynamoDB
     table = resource('dynamodb').Table(table_name)

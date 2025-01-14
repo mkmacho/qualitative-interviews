@@ -1,11 +1,11 @@
 #!/bin/bash
 
 echo "----------------------------------- IMPORTANT NOTES: --------------------------------------"
-echo "This file deploys your application. You should run:"
+echo "This script deploys your code as an AWS Lambda function. You should run it as follows:"
 echo "$0 <S3_BUCKET>"; 
 echo
 echo "Or if you prefer, export BUCKET_NAME as an environment variables or even modify this file "
-echo "directly with chosen bucket name from serverless-setup. "
+echo "directly with chosen bucket name from aws_setup.py "
 echo "-------------------------------------------------------------------------------------------"
 echo 
 
@@ -30,7 +30,7 @@ sam deploy \
 
 echo
 echo "------------------------------- IMPORTANT NOTES: ------------------------------------"
-echo "Take note of the API Gatekey endpoint published above. This is where to make requests."
+echo "Take note of the API Gatekey endpoint published above. This is where to make requests to."
 echo "If no changes have been deployed your endpoint will remain the same. Good luck!"
 echo "-------------------------------------------------------------------------------------"
 echo

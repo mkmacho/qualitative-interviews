@@ -21,7 +21,7 @@ class InterviewManager(object):
         self.history = []           # List of 'states', i.e. messages
         self.current_state = {
             'order': 0,                         # index of message
-            'session_id': self.session_id,      # always store session
+            'session_id': self.session_id,      # always store session_id
             'topic_idx': 1,                     # topic index
             'question_idx': 1,                  # within-topic question index
             'finish_idx': 1,                    # closing question index

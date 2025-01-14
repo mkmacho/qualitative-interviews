@@ -1,3 +1,9 @@
+"""
+ This file is the main entry point for the Flask application.
+ It contains the routes and logic for the application.
+ If the AI interviewer is deployed as an AWS Lambda function, this file is ignored.
+"""
+
 from flask import (
 	Flask, 
 	request,
