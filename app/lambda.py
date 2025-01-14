@@ -48,7 +48,7 @@ def handler(event, context):
             )
         )
     elif request.get('route') == 'retrieve':
-        response['body'] = json.dumps(retrieve_sessions(payload))
+        response['body'] = json.dumps(retrieve_sessions())
     else:
         raise ValueError("Invalid request. Please try again.")
 

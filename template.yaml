@@ -14,7 +14,7 @@ Globals:
     LoggingConfig:
       LogFormat: JSON
       SystemLogLevel: WARN          # Change as you see fit
-      ApplicationLogLevel: ERROR    # Change as you see fit
+      ApplicationLogLevel: INFO    # Change as you see fit
     Architectures:
       - arm64 
   Api:

@@ -49,8 +49,8 @@ class LLMAgent(object):
                     )
                 }],
                 "model": self.parameters[task].get('model', 'gpt-4o-mini'),
-                "max_tokens": int(self.parameters[task].get('max_tokens', 300)),
-                "temperature": float(self.parameters[task].get('temperature', 0))
+                "max_tokens": self.parameters[task].get('max_tokens', 300),
+                "temperature": self.parameters[task].get('temperature', 0)
             } for task in tasks
         }
 

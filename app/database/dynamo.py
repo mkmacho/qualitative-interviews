@@ -1,4 +1,5 @@
 from boto3 import resource
+from decimal import Decimal
 import logging 
 
 
@@ -54,6 +55,8 @@ class DynamoDB(object):
                     continue
                 # Add all messages in current interview session
                 chats.extend(session['session'])
+                item_retrieved_from_db = dict(map(lambda x: (x[0], int(x[1])) if isinstance(x[1], Decimal) else x, item_retrieved_from_db.items()))
+
             if not resp.get('LastEvaluatedKey'): break
             last_eval = resp['LastEvaluatedKey']
 

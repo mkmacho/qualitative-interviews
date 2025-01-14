@@ -28,9 +28,9 @@ Namely, you will need:
 *probe*: Prompt for the probing agent
 *moderator*: Prompt for the moderator agent
 
-For the prompts, you can also specify a maximum length (`max_tokens`) for the desired 
-response, a `temperature` for the LLM, and a `model` for the LLM to use. Note that the 
-prompt may reference the current state of the interview or the defined interview 
+For the prompts, you can also specify a maximum integer length (`max_tokens`) for the desired 
+response, a floating point (decimal) `temperature` for the LLM, and a `model` for the LLM to use. 
+Note that the prompt may reference the current state of the interview or the defined interview 
 structure through the use of curly bracket variables (e.g. `{topics}` will be populated 
 by the defined `interview_plan`).
 """
@@ -125,7 +125,7 @@ INTERVIEW_PARAMETERS = {
 
 				YOUR RESPONSE: Please provide the most suitable next transition question in the interview, without any other discussion, context, or remarks.
 			""",
-			"temperature": '0.7',
+			"temperature": 0.7,
 			"model": "gpt-4o",
 			"max_tokens": 300
 		},
@@ -159,7 +159,7 @@ INTERVIEW_PARAMETERS = {
 
 				YOUR RESPONSE: Please provide the most suitable next probing question in the interview, without any other discussion, context, or remarks.
 			""",
-			"temperature": '0.7',
+			"temperature": 0.7,
 			"model": "gpt-4o",
 			"max_tokens": 300
 		},
@@ -255,7 +255,7 @@ INTERVIEW_PARAMETERS = {
 
 				YOUR RESPONSE: Please provide the most suitable next transition question in the interview, without any other discussion, context, or remarks.
 			""",
-			"temperature": '0.7',
+			"temperature": 0.7,
 			"model": "gpt-4o",
 			"max_tokens": 300
 		},
@@ -289,7 +289,7 @@ INTERVIEW_PARAMETERS = {
 
 				YOUR RESPONSE: Please provide the most suitable next probing question in the interview, without any other discussion, context, or remarks.
 			""",
-			"temperature": '0.7',
+			"temperature": 0.7,
 			"model": "gpt-4o",
 			"max_tokens": 300
 		},
