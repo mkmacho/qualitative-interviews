@@ -323,7 +323,7 @@ INTERVIEW_PARAMETERS = {
 			"max_tokens": 300
 		},
 		"moderator": {
-			"prompt": """your_prompt_here""".
+			"prompt": """your_prompt_here""",
 			"model": "gpt-4o",
 			"max_tokens": 2
 		}
