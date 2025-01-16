@@ -195,35 +195,7 @@ This will open a web page displaying the first question of the interview (as spe
 
 
 **Programmatic access**:
-The main API endpoint `/next` is to continue (or begin, if not started) an interview. This is done by making an HTTP POST request with the following body:
-```
-{
-    "route": "next",
-    "payload": {
-        "user_message": "USER_RESPONSE_TO_PRIOR_INTERVIEW_QUESTION",
-        "session_id": "UNIQUE_INTERVIEW_SESSION_ID",
-        "interview_id": "SET_OF_INTERVIEW_GUIDELINES"
-    }
-}
-```
-where the `route` key tells the application to return the `next` interview question, the `user_message` provdies the prior response (*if not the first request*) on which to build, the `interview_id` informs how to guide the interview at a high-level, and the `session_id` identifies the interview session.
-
-For example, we can test this API localy using `curl` at the `http://127.0.0.1:8000/next` URL:
-
-```bash
-curl -X POST -d '{"route":"next", "payload": {"session_id": "TEST-SESSION-123", "interview_id": "STOCK_MARKET", "user_message":"I dont have disposable income to invest"} }' http://127.0.0.1:8000/next
-```
-
-where you can replace the URL with the host, port, endpoint URL exposed on your remote server or through AWS serverless.
-
-You can also test the `/next` endpoint through Python with the above body as follows:
-
-```python
-import requests
-response = requests.post("http://127.0.0.1:8000/next", json=body)
-```
-
-
+The file `app/app.py` includes a detailed documentation of the API and how to access them programatically when hosting the app either locally or as a Flask app. If you host the app as an AWS Lambda function, the file `app/lambda.py` includes the relevant documentation of how to interact with the app.
 
 ##  Retrieving stored interviews
 
