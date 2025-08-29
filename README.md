@@ -1,4 +1,4 @@
-# Code for "Conducting Qualitative Interviews with AI" 
+# Conducting Qualitative Interviews with AI
 
 This codebase allows you to conduct qualitative interviews with human subjects by delegating the task of interviewing to an AI-interviewer. We support three options of running the application:
 1. Running the application locally on your own machine for testing and development.
@@ -16,7 +16,7 @@ Our recommended setup is to host the AI interviewer application as an AWS Lambda
 
 ## Paper and citation
 
-The paper is available here: [https://dx.doi.org/10.2139/ssrn.4583756](https://dx.doi.org/10.2139/ssrn.4583756).
+This repository serves as a companion codebase to "Conducting Qualitative Interviews with AI" available here: [https://dx.doi.org/10.2139/ssrn.4583756](https://dx.doi.org/10.2139/ssrn.4583756).
 
 This code is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). Commercial use, including applications in business or for-profit ventures, is strictly prohibited without prior written permission. Uses and distribution should cite:
 
@@ -60,7 +60,7 @@ The cleanest way to then run the application -- locally or remotely -- is throug
 **Step 1**: Clone the project from GitHub and navigate into the repo:
 
 ```bash
-git clone https://github.com/fchop/interviews.git
+git clone https://github.com/mkmacho/qualitative-interviews
 cd qualitative-interviews
 ```
 
@@ -99,7 +99,7 @@ source bin/activate
 **Step 1:** Clone this project from Github and install the necessary packages defined in the repository's `local_requirements.txt` file using `pip`:
 
 ```bash
-git clone https://github.com/fchop/interviews.git
+git clone https://github.com/mkmacho/qualitative-interviews
 cd qualitative-interviews
 
 pip install -r local_requirements.txt
